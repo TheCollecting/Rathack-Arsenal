@@ -55,11 +55,23 @@ function createVisuals(player)
     draw.name = Drawing.new("Text")
     draw.name.Center = true
     draw.name.Size = 16
+    draw.name.Outline = true
+    draw.name.OutlineColor = Color3.fromHex('000000')
+
+    draw.boxOutline = Drawing.new("Square")
+    draw.boxOutline.Visible = false
+    draw.boxOutline.Thickness = 2.5
+    draw.boxOutline.Filled = false
 
     draw.box = Drawing.new("Square")
     draw.box.Visible = false
     draw.box.Thickness = 1
     draw.box.Filled = false
+
+    draw.barOutline = Drawing.new("Line")
+    draw.barOutline.Visible = false
+    draw.barOutline.Thickness = 4
+    draw.barOutline.Color = Color3.fromHex('000000')
 
     draw.bar = Drawing.new("Line")
     draw.bar.Visible = false
@@ -143,7 +155,9 @@ local ESPLoop = game:GetService("RunService").RenderStepped:Connect(function()
     for l, g in next, espList do
         text = g.name
         box = g.box
+        boxOutline = g.boxOutline
         healthbar = g.bar
+        healthbarOutline = g.barOutline
         if l.Character then
             if l.Character.Humanoid.health > 0 then
                 if localPlayer.team ~= l.Team or not esp.teamcheck then
@@ -160,8 +174,13 @@ local ESPLoop = game:GetService("RunService").RenderStepped:Connect(function()
                             box.Position = Vector2.new(round(x - width / 2, y - height / 2))
                             box.Color = esp.colortext
                             box.Visible = true
+                            boxOutline.Size = Vector2.new(width, height)
+                            boxOutline.Position = Vector2.new(round(x - width / 2, y - height / 2))
+                            boxOutline.Color = Color3.fromHex('000000')
+                            boxOutline.Visible = true
                         else
                             box.Visible = false
+                            boxOutline.Visible = false
                         end
 
                         if esp.healthbar.enabled then
@@ -169,14 +188,21 @@ local ESPLoop = game:GetService("RunService").RenderStepped:Connect(function()
                             if esp.healthbar.side == "Left" then
                                 healthbar.From = Vector2.new(round(x - width / 2 - 3, y - height / 2 + height))
                                 healthbar.To = Vector2.new(healthbar.From.X, healthbar.From.Y - (health) * height)
+                                healthbarOutline.From = Vector2.new(round(x - width / 2 - 3, y - height / 2 + height + 1))
+                                healthbarOutline.To = Vector2.new(healthbar.From.X, healthbar.From.Y - (health) * height - 1)
+                                
                             else
                                 healthbar.From = Vector2.new(round(x + width / 2 + 3, y - height / 2 + height))
                                 healthbar.To = Vector2.new(healthbar.From.X, healthbar.From.Y - (health) * height)
+                                healthbarOutline.From = Vector2.new(round(x + width / 2 + 3, y - height / 2 + height + 1))
+                                healthbarOutline.To = Vector2.new(healthbar.From.X, healthbar.From.Y - (health) * height - 1)
                             end
                             healthbar.Color = Color3.fromRGB(255 - (255 * health), 255 * health, 0)
                             healthbar.Visible = true
+                            healthbarOutline.Visible = true
                         else
                             healthbar.Visible = false
+                            healthbarOutline.Visible = false
                         end
                         if esp.name.enabled then
                             text.Size = esp.size
@@ -197,18 +223,24 @@ local ESPLoop = game:GetService("RunService").RenderStepped:Connect(function()
                     else
                         text.Visible = false
                         box.Visible = false
+                        boxOutline.Visible = false
                         healthbar.Visible = false
+                        healthbarOutline.Visible = false
                     end
                 else
                     text.Visible = false
                     box.Visible = false
+                    boxOutline.Visible = false
                     healthbar.Visible = false
+                    healthbarOutline.Visible = false
                 end
             end
         else
             text.Visible = false
             box.Visible = false
+            boxOutline.Visible = false
             healthbar.Visible = false
+            healthbarOutline.Visible = false
         end
     end
 end)
