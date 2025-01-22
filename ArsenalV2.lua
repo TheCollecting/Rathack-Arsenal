@@ -38,6 +38,18 @@ local esp = {
     }
 }
 
+local aim = {
+    enabled = true,
+    teamaim = true,
+    part = "Head",
+    fov = 50,
+    showFov = true,
+    fovColor = Color3.fromHex('ff89a4'),
+    fovThickness = 2,
+    key = "MB2",
+    keyHeld = false,
+}
+
 function createVisuals(player)
     local draw = {}
     draw.name = Drawing.new("Text")
@@ -55,6 +67,10 @@ function createVisuals(player)
     
     espList[player] = draw
 end
+
+local fovCircle = Drawing.new('Circle')
+fovCircle.Position = camera.ViewportSize / 2
+fovCircle.Thickness = aim.fovThickness
 
 local function removeEsp(player)
     if rawget(espList, player) then
@@ -92,69 +108,102 @@ function deleteChams()
     end
 end
 
+-- need to add a alive check and distance priority
+-- could probably just name this aimbot bc its all the aimbot code
+function getBestTarget()
+    local inFov = {}
+    for _, p in players:GetPlayers() do
+        if p.Character.Humanoid.health > 0 then
+            if localPlayer.name ~= p.Name then
+                if localPlayer.team ~= p.Team or not aim.teamaim then
+                    local pos, onScreen, depth = wtvp(p.Character:FindFirstChild(aim.part).Position)
+                    if (onScreen and ((Vector2.new(pos.X, pos.Y) - camera.ViewportSize/2).Magnitude) <= aim.fov) then
+                        workspace.CurrentCamera.CFrame = CFrame.new(workspace.CurrentCamera.CFrame.Position, p.Character:FindFirstChild(aim.part).Position)
+                    end
+                end
+            end
+        end
+    end
+end
+
 local ESPLoop = game:GetService("RunService").RenderStepped:Connect(function()
+
+    fovCircle.Visible = aim.showFov
+    fovCircle.Color = aim.fovColor
+    fovCircle.Radius = aim.fov
+    fovCircle.Thickness = aim.fovThickness
+
+    if aim.enabled then
+        aim.keyHeld = Options.AimKeyPicker.GetState()
+        if aim.keyHeld then
+            getBestTarget()
+        end
+    end
+
     for l, g in next, espList do
         text = g.name
         box = g.box
         healthbar = g.bar
         if l.Character then
-            if localPlayer.team ~= l.Team or not esp.teamcheck then
-                local playerPos = l.Character:GetModelCFrame()
-                local pos, onScreen, depth = wtvp(l.Character.HumanoidRootPart.Position)
-                if pos and onScreen then
-                    local scaleFactor = 1 / (depth * tan(rad(camera.FieldOfView / 2)) * 2) * 1000
-                    local width, height = round(4 * scaleFactor, 6 * scaleFactor)
-                    local x, y = round(pos.X, pos.Y)
-                    local topOffset = y - height / 2 - 15
-                    local bottomOffset = y + height / 2
-                    if esp.box.enabled then
-                        box.Size = Vector2.new(width, height)
-                        box.Position = Vector2.new(round(x - width / 2, y - height / 2))
-                        box.Color = esp.colortext
-                        box.Visible = true
-                    else
-                        box.Visible = false
-                    end
-
-                    if esp.healthbar.enabled then
-                        health = game:GetService("Players")[l.Character.name].NRPBS["Health"].Value / l.Character.Humanoid.MaxHealth
-                        if esp.healthbar.side == "Left" then
-                            healthbar.From = Vector2.new(round(x - width / 2 - 3, y - height / 2 + height))
-                            healthbar.To = Vector2.new(healthbar.From.X, healthbar.From.Y - (health) * height)
+            if l.Character.Humanoid.health > 0 then
+                if localPlayer.team ~= l.Team or not esp.teamcheck then
+                    local playerPos = l.Character:GetModelCFrame()
+                    local pos, onScreen, depth = wtvp(l.Character.HumanoidRootPart.Position)
+                    if pos and onScreen then
+                        local scaleFactor = 1 / (depth * tan(rad(camera.FieldOfView / 2)) * 2) * 1000
+                        local width, height = round(4 * scaleFactor, 6 * scaleFactor)
+                        local x, y = round(pos.X, pos.Y)
+                        local topOffset = y - height / 2 - 15
+                        local bottomOffset = y + height / 2
+                        if esp.box.enabled then
+                            box.Size = Vector2.new(width, height)
+                            box.Position = Vector2.new(round(x - width / 2, y - height / 2))
+                            box.Color = esp.colortext
+                            box.Visible = true
                         else
-                            healthbar.From = Vector2.new(round(x + width / 2 + 3, y - height / 2 + height))
-                            healthbar.To = Vector2.new(healthbar.From.X, healthbar.From.Y - (health) * height)
+                            box.Visible = false
                         end
-                        healthbar.Color = Color3.fromRGB(255 - (255 * health), 255 * health, 0)
-                        healthbar.Visible = true
-                    else
-                        healthbar.Visible = false
-                    end
-                    if esp.name.enabled then
-                        text.Size = esp.size
-                        text.Color = esp.color
-                        text.Visible = true
 
-                        text.Text = l.name
-                        if esp.name.side == "Top" then
-                            text.Position = Vector2.new(round(x, topOffset))
-                            topOffset+=11
+                        if esp.healthbar.enabled then
+                            health = game:GetService("Players")[l.Character.name].NRPBS["Health"].Value / l.Character.Humanoid.MaxHealth
+                            if esp.healthbar.side == "Left" then
+                                healthbar.From = Vector2.new(round(x - width / 2 - 3, y - height / 2 + height))
+                                healthbar.To = Vector2.new(healthbar.From.X, healthbar.From.Y - (health) * height)
+                            else
+                                healthbar.From = Vector2.new(round(x + width / 2 + 3, y - height / 2 + height))
+                                healthbar.To = Vector2.new(healthbar.From.X, healthbar.From.Y - (health) * height)
+                            end
+                            healthbar.Color = Color3.fromRGB(255 - (255 * health), 255 * health, 0)
+                            healthbar.Visible = true
                         else
-                            text.Position = Vector2.new(round(x, bottomOffset))
-                            bottomOffset+=11
+                            healthbar.Visible = false
+                        end
+                        if esp.name.enabled then
+                            text.Size = esp.size
+                            text.Color = esp.color
+                            text.Visible = true
+
+                            text.Text = l.name
+                            if esp.name.side == "Top" then
+                                text.Position = Vector2.new(round(x, topOffset))
+                                topOffset+=11
+                            else
+                                text.Position = Vector2.new(round(x, bottomOffset))
+                                bottomOffset+=11
+                            end
+                        else
+                            text.Visible = false
                         end
                     else
                         text.Visible = false
+                        box.Visible = false
+                        healthbar.Visible = false
                     end
                 else
                     text.Visible = false
                     box.Visible = false
                     healthbar.Visible = false
                 end
-            else
-                text.Visible = false
-                box.Visible = false
-                healthbar.Visible = false
             end
         else
             text.Visible = false
@@ -251,8 +300,8 @@ Library:OnUnload(function()
     end
 
     deleteChams()
-    
-    -- clearPlayerText()
+
+    fovCircle:Remove()
 
     print('Unloaded!')
     Library.Unloaded = true
@@ -288,13 +337,6 @@ Fartbox:AddToggle('Team Check',{
     Tooltip = 'tooltuah',
     Callback = function(Value)
         esp.teamcheck = Value
-    end
-}):AddColorPicker('ESPP',{
-    Text = 'Name Color',
-    Default = esp.color,
-    Tooltip = 'Thanks zopac for the code idiot',
-    Callback = function(Value)
-        esp.color = Value
     end
 })
 
@@ -351,6 +393,13 @@ Fartbox:AddToggle('names', {
     Callback = function(Value)
         esp.name.enabled = Value
     end
+}):AddColorPicker('ESPP',{
+    Text = 'Name Color',
+    Default = esp.color,
+    Tooltip = 'Thanks zopac for the code idiot',
+    Callback = function(Value)
+        esp.color = Value
+    end
 })
 
 Fartbox:AddDropdown('namelocation', {
@@ -383,6 +432,77 @@ Fartbox:AddToggle('Visible only chams', {
     Default = esp.chams.visible,
     Callback = function(Value)
         esp.chams.visible = Value
+    end
+})
+
+Fartbox:AddToggle('Aimbot', {
+    Text = 'Aimbot',
+    Default = aim.enabled,
+
+    Callback = function(value)
+        aim.enabled = Value
+    end
+})
+Fartbox:AddLabel('aimKey'):AddKeyPicker('AimKeyPicker', {
+    Default = aim.key,
+    Mode = 'Hold',
+    Text = 'Aimkey',
+
+    Callback = function(Value)
+    end,
+    Callback = function(Value)
+        aim.key = Value
+    end
+})
+
+Fartbox:AddToggle('fovCircle', {
+    Default = aim.showFov,
+    Text = 'Fov circle',
+    Callback = function(Value)
+        aim.showFov = Value
+    end
+}):AddColorPicker('fov circle',{
+    Text = 'fov Color',
+    Default = aim.fovColor,
+    Tooltip = 'im crying',
+    Callback = function(Value)
+        aim.fovColor = Value
+    end
+})
+Fartbox:AddSlider('Fov slider', {
+    Text = 'Fov',
+    Default = aim.fov,
+    Min = 5,
+    Max = 300,
+    Rounding = 1,
+    Compact = true,
+
+    Callback = function(Value)
+        aim.fov = Value
+    end
+})
+
+Fartbox:AddSlider('Fov circle thickness', {
+    Text = 'Fov circle thickness',
+    Default = aim.fovThickness,
+    Min = 1,
+    Max = 5,
+    Rounding = 1,
+    Compact = true,
+
+    Callback = function(Value)
+        aim.fovThickness = Value
+    end
+})
+
+Fartbox:AddDropdown('Aim part', {
+    Values = { 'Head', 'UpperTorso', 'LowerTorso', 'RightUpperArm', 'LeftUpperArm', 'RightLowerArm', 'LeftLowerArm', 'RightHand', 'LeftHand', 'RightUpperLeg', 'LeftUpperLeg', 'RightLowerLeg', 'LeftLowerLeg', 'RightFoot', 'LeftFoot' },
+    Default = 1,
+    Multi = false,
+    Text = 'aim part',
+    Tooltip = 'i hate you i hate everything leave me alone',
+    Callback = function(Value)
+        aim.part = Value
     end
 })
 
