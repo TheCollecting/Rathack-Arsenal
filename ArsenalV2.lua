@@ -288,6 +288,7 @@ local Window = Library:CreateWindow({
 })
 
 local Tabs = {
+    ['AIM'] = Window:AddTab('Aimbot'),
     ['ESP'] = Window:AddTab('Visuals'),
     ['MISC'] = Window:AddTab('Misc'),
     ['UI Settings'] = Window:AddTab('UI Settings'),
@@ -362,7 +363,7 @@ uiToggles:AddToggle('Watermark', {
     Callback = function(Value)
     end
 })
-local Fartbox = Tabs['ESP']:AddRightGroupbox('Fartbox')
+local Fartbox = Tabs['ESP']:AddLeftGroupbox('Fartbox')
 Fartbox:AddToggle('Team Check',{
     Text = 'Team Check',
     Default = esp.teamcheck,
@@ -413,7 +414,7 @@ Fartbox:AddToggle('Boxes', {
 
 Fartbox:AddToggle('HealthBar', {
     Default = esp.healthbar.enabled,
-    Text = 'healt bar',
+    Text = 'Health Bar',
     Callback = function(Value)
         esp.healthbar.enabled = Value
     end
@@ -421,7 +422,7 @@ Fartbox:AddToggle('HealthBar', {
 
 Fartbox:AddToggle('names', {
     Default = esp.name.enabled,
-    Text = 'names',
+    Text = 'Names',
     Callback = function(Value)
         esp.name.enabled = Value
     end
@@ -435,7 +436,7 @@ Fartbox:AddToggle('names', {
 })
 
 Fartbox:AddDropdown('namelocation', {
-    Text = 'name location',
+    Text = 'Name Location',
     Values = {'Top', "Bottom"},
     Default = 1,
     Multi = false,
@@ -460,13 +461,14 @@ Fartbox:AddToggle('Chams', {
 })
 
 Fartbox:AddToggle('Visible only chams', {
-    Text = 'Vis only chams',
+    Text = 'Vis Chams',
     Default = esp.chams.visible,
     Callback = function(Value)
         esp.chams.visible = Value
     end
 })
 
+local Fartbox = Tabs['AIM']:AddLeftGroupbox('Fartbox')
 Fartbox:AddToggle('Aimbot', {
     Text = 'Aimbot',
     Default = aim.enabled,
@@ -475,10 +477,10 @@ Fartbox:AddToggle('Aimbot', {
         aim.enabled = Value
     end
 })
-Fartbox:AddLabel('aimKey'):AddKeyPicker('AimKeyPicker', {
+Fartbox:AddLabel('Aim Key'):AddKeyPicker('AimKeyPicker', {
     Default = aim.key,
     Mode = 'Hold',
-    Text = 'Aimkey',
+    Text = 'Aim Key',
 
     Callback = function(Value)
     end,
@@ -531,7 +533,7 @@ Fartbox:AddDropdown('Aim part', {
     Values = { 'Head', 'UpperTorso', 'LowerTorso', 'RightUpperArm', 'LeftUpperArm', 'RightLowerArm', 'LeftLowerArm', 'RightHand', 'LeftHand', 'RightUpperLeg', 'LeftUpperLeg', 'RightLowerLeg', 'LeftLowerLeg', 'RightFoot', 'LeftFoot' },
     Default = 1,
     Multi = false,
-    Text = 'aim part',
+    Text = 'Aim Part',
     Tooltip = 'i hate you i hate everything leave me alone',
     Callback = function(Value)
         aim.part = Value
