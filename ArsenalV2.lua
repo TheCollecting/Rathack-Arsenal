@@ -3,117 +3,188 @@ local camera = workspace.CurrentCamera
 local playerList = {}
 local playerText = {}
 local playerBox = {}
-local localPlayer = game:GetService("Players").LocalPlayer;
+local healthBars = {}
+local espList = {}
+local Folder = Instance.new('Folder')
+local chamList = {}
+local localPlayer = game:GetService("Players").LocalPlayer
+local round = function(...) local a = {} for i,v in next, table.pack(...) do a[i] = math.round(v) end return unpack(a) end
+local CurrentCamera = workspace.CurrentCamera
+local tan, rad = math.tan, math.rad
+local camera = workspace.CurrentCamera
+local wtvp = function(...) local a, b = camera.WorldToViewportPoint(camera, ...) return Vector2.new(a.X, a.Y), b, a.Z end
+local players = game:GetService("Players")
+local localplayer = players.LocalPlayer
 
 local esp = {
     teamcheck = true,
     size = 16,
     color = Color3.fromHex('ff00fb'),
     colortext = Color3.fromHex('ff00fb'),
+    name = {
+        enabled = true,
+        side = 'Top',
+    },
+    healthbar = {
+        side = 'Left',
+    },
+    box = {
+        enabled = true,
+    },
+    chams = {
+        enabled = true,
+        color = Color3.fromHex('ff00fb'),
+        visible = false,
+    }
 }
 
-function initPlayerText()
-    for i = 0, 16 do
-        text = Drawing.new("Text")
-        text.Center = true
-        text.Size = 16
-        text.Color = Color3.fromHex('ff00fb')
-        table.insert(playerText, text)
+function createVisuals(player)
+    local draw = {}
+    draw.name = Drawing.new("Text")
+    draw.name.Center = true
+    draw.name.Size = 16
+
+    draw.box = Drawing.new("Square")
+    draw.box.Visible = false
+    draw.box.Thickness = 1
+    draw.box.Filled = false
+
+    draw.bar = Drawing.new("Line")
+    draw.bar.Visible = false
+    draw.bar.Thickness = 2
+    
+    espList[player] = draw
+end
+
+local function removeEsp(player)
+    if rawget(espList, player) then
+        for _, drawing in next, espList[player] do
+            drawing:Remove()
+        end
+        espList[player] = nil
     end
 end
 
-function clearPlayerText()
-    for _, z in pairs(playerText) do
-        z:Remove()
+for _, player in next, players:GetPlayers() do
+   if player ~= localplayer then
+       createVisuals(player)
+   end
+end
+
+local addLoop = players.PlayerAdded:Connect(function(player)
+    wait(1)
+    createVisuals(player)
+end)
+
+local delLoop = players.PlayerRemoving:Connect(function(player)
+    removeEsp(player)
+end)
+
+function deleteChams()
+    for _, p in players:GetPlayers() do
+        for _, x in p.Character:GetChildren() do
+            if x:IsA("BasePart") then
+                if x:FindFirstChild("Chams") then
+                    x.Chams:Destroy()
+                end
+            end
+        end
     end
 end
 
-function initPlayerBox()
-    table.clear(playerBox)
-    for i = 0, 16 do
-        box = Drawing.new("Square")
-        box.Color = Color3.fromHex('ff00fb')
-        box.Visible = false
-        box.Thickness = 1
-        box.Filled = false
-        table.insert(playerBox, box)
-    end
-end
-
-function clearPlayerBox()
-    for _, i in pairs(playerBox) do
-        i:Remove()
-    end
-end
-
-function hideAllPlayerText()
-    for _, i in pairs(playerText) do
-        i.Visible = false
-    end
-end
-function hideAllPlayerBox()
-    for _, i in pairs(playerBox) do
-        i.Visible = false
-    end
-end
-function initPlayerList()
-    table.clear(playerList)
-    for _, x in pairs(game:GetService("Players"):GetPlayers()) do
-        table.insert(playerList, x)
-    end
-end
-
-initPlayerList()
-initPlayerText()
-initPlayerBox()
-
-local ESPLoop = game:GetService("RunService").RenderStepped:Connect(function() 
-    -- initPlayerList()
-    -- initPlayerText()
-    hideAllPlayerText()
-    hideAllPlayerBox()
-    for g, l in pairs(game:GetService("Players"):getPlayers()) do
-        if l ~= localPlayer then
-             if localPlayer.team ~= l.Team or not esp.teamcheck then
-                text = playerText[g]
-               -- print(#playerList)
-               -- print(g)
-                box = playerBox[g]
-               -- if l.Character then
-                local textpos = workspace.Camera:WorldToViewportPoint(l.Character.Head.Position + Vector3.new(0, 3, 0))
-                local head = workspace.Camera:WorldToViewportPoint(l.Character.Head.Position + Vector3.new(0, 0.5, 0))
-                local legpos = workspace.Camera:WorldToViewportPoint(l.Character.HumanoidRootPart.Position - Vector3.new(0, 3, 0))
-                local rootpos = workspace.Camera:WorldToViewportPoint(l.Character.HumanoidRootPart.Position)
-
+local ESPLoop = game:GetService("RunService").RenderStepped:Connect(function()
+    for l, g in next, espList do
+        text = g.name
+        box = g.box
+        healthbar = g.bar
+        if l.Character then
+            if localPlayer.team ~= l.Team or not esp.teamcheck then
                 local playerPos = l.Character:GetModelCFrame()
-                local pos, onScreen = workspace.Camera:WorldToViewportPoint(Vector3.new(playerPos.X, playerPos.Y, playerPos.Z))
+                local pos, onScreen, depth = wtvp(l.Character.HumanoidRootPart.Position)
+                if pos and onScreen then
+                    local scaleFactor = 1 / (depth * tan(rad(camera.FieldOfView / 2)) * 2) * 1000
+                    local width, height = round(4 * scaleFactor, 6 * scaleFactor)
+                    local x, y = round(pos.X, pos.Y)
+                    local topOffset = y - height / 2 - 15
+                    local bottomOffset = y + height / 2
+                    if esp.box.enabled then
+                        box.Size = Vector2.new(width, height)
+                        box.Position = Vector2.new(round(x - width / 2, y - height / 2))
+                        box.Color = esp.colortext
+                        box.Visible = true
+                    else
+                        box.Visible = false
+                    end
 
-                 if onScreen then
-                    box.Size = Vector2.new(2000 / rootpos.Z, head.Y + 0.5 - legpos.Y)
-                    box.Position = Vector2.new(rootpos.X - box.Size.X / 2, rootpos.Y - box.Size.Y / 2)
-                    box.Color = esp.colortext
-                    box.Visible = true
+                    if esp.healthbar.enabled then
+                        health = game:GetService("Players")[l.Character.name].NRPBS["Health"].Value / l.Character.Humanoid.MaxHealth
+                        if esp.healthbar.side == "Left" then
+                            healthbar.From = Vector2.new(round(x - width / 2 - 3, y - height / 2 + height))
+                            healthbar.To = Vector2.new(healthbar.From.X, healthbar.From.Y - (health) * height)
+                        else
+                            healthbar.From = Vector2.new(round(x + width / 2 + 3, y - height / 2 + height))
+                            healthbar.To = Vector2.new(healthbar.From.X, healthbar.From.Y - (health) * height)
+                        end
+                        healthbar.Color = Color3.fromRGB(255 - (255 * health), 255 * health, 0)
+                        healthbar.Visible = true
+                    else
+                        healthbar.Visible = false
+                    end
+                    if esp.name.enabled then
+                        text.Size = esp.size
+                        text.Color = esp.color
+                        text.Visible = true
 
-                    text.Size = esp.size
-                    text.Color = esp.color
-                    text.Visible = true
-                    text.Position = Vector2.new(textpos.X, textpos.Y)
-                    text.Text = l.name
+                        text.Text = l.name
+                        if esp.name.side == "Top" then
+                            text.Position = Vector2.new(round(x, topOffset))
+                            topOffset+=11
+                        else
+                            text.Position = Vector2.new(round(x, bottomOffset))
+                            bottomOffset+=11
+                        end
                     else
                         text.Visible = false
-                        box.Visible = false
-                  end
-               -- else
-                  --  text.Visible = false
-                   -- box.Visible = false
-               -- end
-            else
-                   text.Visible = false
-                   box.Visible = false
-            end
-        else
+                    end
+                else
                     text.Visible = false
                     box.Visible = false
+                    healthbar.Visible = false
+                end
+            else
+                text.Visible = false
+                box.Visible = false
+                healthbar.Visible = false
+            end
+        else
+            text.Visible = false
+            box.Visible = false
+            healthbar.Visible = false
+        end
+    end
+end)
+
+-- Pretty sure everything about this is not that great for performance ฅ^•ﻌ•^ฅ
+local mainloop = game:GetService("RunService").Heartbeat:Connect(function()
+    deleteChams()
+    if esp.chams.enabled then
+        for g, v in next, players:GetPlayers() do
+            if v.Character and v.Character:FindFirstChild("HumanoidRootPart") and  v.Character:FindFirstChild("Humanoid") and v.Character:FindFirstChild("Humanoid").Health ~= 0 and v.Character.name ~= localPlayer.Character.name then
+                for k, b in next, v.Character:GetChildren() do
+                    if b:IsA("BasePart") and b.Transparency ~= 1 then
+                        if not b:FindFirstChild("Glow") and not b:FindFirstChild("Chams") then
+                            local y = Instance.new("BoxHandleAdornment", b)
+                            y.Size = b.Size + Vector3.new(0.25, 0.25, 0.25)
+                            y.Name = "Chams"
+                            y.AlwaysOnTop = not esp.chams.visible
+                            y.ZIndex = 3
+                            y.Adornee = b 
+                            y.Color3 = esp.chams.color
+                            y.Transparency = 0.5
+                        end
+                    end
+                end
+            end
         end
     end
 end)
@@ -135,7 +206,7 @@ local Window = Library:CreateWindow({
 
 local Tabs = {
     ['ESP'] = Window:AddTab('Visuals'),
-    ['MISC'] = Window:AddTab('MISC'),
+    ['MISC'] = Window:AddTab('Misc'),
     ['UI Settings'] = Window:AddTab('UI Settings'),
 }
 
@@ -164,13 +235,21 @@ Library:OnUnload(function()
     ESPLoop:Disconnect()
     ESPLoop = nil
 
-    for _, m in pairs(playerBox) do
-        m:Remove()
-    end
-    for _, v in pairs(playerText) do
-        v:Remove()
+    mainloop:Disconnect()
+    mainloop = nil
+
+    addLoop:Disconnect()
+    addLoop = nil
+    delLoop:Disconnect()
+    delLoop = nil
+
+    -- Delete ESP
+    for _, p in players:GetPlayers() do
+        removeEsp(p)
     end
 
+    deleteChams()
+    
     -- clearPlayerText()
 
     print('Unloaded!')
@@ -235,6 +314,73 @@ Fartbox:AddSlider('Name Size', {
     Tooltip = 'hiyanc is the devil',
     Callback = function(Value)
         esp.size = Value
+    end
+})
+
+Fartbox:AddDropdown('HealthLocation', {
+    Values = {'Left', 'Right'},
+    Default = esp.healthbar.side,
+    Multi = false,
+    Text = 'Healthbar Location',
+    Callback = function(Value)
+        esp.healthbar.side = Value
+    end
+})
+
+Fartbox:AddToggle('Boxes', {
+    Default = esp.box.enabled,
+    Text = 'Boxes',
+    Callback = function(Value)
+        esp.box.enabled = Value
+    end
+})
+
+Fartbox:AddToggle('HealthBar', {
+    Default = esp.healthbar.enabled,
+    Text = 'healt bar',
+    Callback = function(Value)
+        esp.healthbar.enabled = Value
+    end
+})
+
+Fartbox:AddToggle('names', {
+    Default = esp.name.enabled,
+    Text = 'names',
+    Callback = function(Value)
+        esp.name.enabled = Value
+    end
+})
+
+Fartbox:AddDropdown('namelocation', {
+    Text = 'name location',
+    Values = {'Top', "Bottom"},
+    Default = 1,
+    Multi = false,
+    Callback = function(Value)
+        esp.name.side = Value
+    end
+})
+
+Fartbox:AddToggle('Chams', {
+    Text = 'Chams',
+    Default = esp.chams.enabled,
+    Callback = function(Value)
+        esp.chams.enabled = Value
+    end
+}):AddColorPicker('chams Color',{
+    Text = 'chams Color',
+    Default = esp.chams.color,
+    Tooltip = 'im crying',
+    Callback = function(Value)
+        esp.chams.color = Value
+    end
+})
+
+Fartbox:AddToggle('Visible only chams', {
+    Text = 'Vis only chams (Needs work)',
+    Default = esp.chams.visible,
+    Callback = function(Value)
+        esp.chams.visible = Value
     end
 })
 
