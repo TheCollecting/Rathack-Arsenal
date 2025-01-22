@@ -169,18 +169,20 @@ local mainloop = game:GetService("RunService").Heartbeat:Connect(function()
     deleteChams()
     if esp.chams.enabled then
         for g, v in next, players:GetPlayers() do
-            if v.Character and v.Character:FindFirstChild("HumanoidRootPart") and  v.Character:FindFirstChild("Humanoid") and v.Character:FindFirstChild("Humanoid").Health ~= 0 and v.Character.name ~= localPlayer.Character.name then
-                for k, b in next, v.Character:GetChildren() do
-                    if b:IsA("BasePart") and b.Transparency ~= 1 then
-                        if not b:FindFirstChild("Glow") and not b:FindFirstChild("Chams") then
-                            local y = Instance.new("BoxHandleAdornment", b)
-                            y.Size = b.Size + Vector3.new(0.25, 0.25, 0.25)
-                            y.Name = "Chams"
-                            y.AlwaysOnTop = not esp.chams.visible
-                            y.ZIndex = 3
-                            y.Adornee = b 
-                            y.Color3 = esp.chams.color
-                            y.Transparency = 0.5
+            if localPlayer.team ~= v.Team or not esp.teamcheck then
+                if v.Character and v.Character:FindFirstChild("HumanoidRootPart") and  v.Character:FindFirstChild("Humanoid") and v.Character:FindFirstChild("Humanoid").Health ~= 0 and v.Character.name ~= localPlayer.Character.name then
+                    for k, b in next, v.Character:GetChildren() do
+                        if b:IsA("BasePart") and b.Transparency ~= 1 then
+                            if not b:FindFirstChild("Glow") and not b:FindFirstChild("Chams") then
+                                local y = Instance.new("BoxHandleAdornment", b)
+                                y.Size = b.Size + Vector3.new(0.25, 0.25, 0.25)
+                                y.Name = "Chams"
+                                y.AlwaysOnTop = not esp.chams.visible
+                                y.ZIndex = 3
+                                y.Adornee = b 
+                                y.Color3 = esp.chams.color
+                                y.Transparency = 0.5
+                            end
                         end
                     end
                 end
@@ -362,7 +364,7 @@ Fartbox:AddDropdown('namelocation', {
 })
 
 Fartbox:AddToggle('Chams', {
-    Text = 'Chams',
+    Text = 'Chams (Needs work)',
     Default = esp.chams.enabled,
     Callback = function(Value)
         esp.chams.enabled = Value
@@ -377,7 +379,7 @@ Fartbox:AddToggle('Chams', {
 })
 
 Fartbox:AddToggle('Visible only chams', {
-    Text = 'Vis only chams (Needs work)',
+    Text = 'Vis only chams',
     Default = esp.chams.visible,
     Callback = function(Value)
         esp.chams.visible = Value
