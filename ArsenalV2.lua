@@ -16,6 +16,18 @@ local wtvp = function(...) local a, b = camera.WorldToViewportPoint(camera, ...)
 local players = game:GetService("Players")
 local localplayer = players.LocalPlayer
 
+local StarterPlayer = game:GetService("StarterPlayer")
+local OriginalSizes = {}
+for i, v in pairs(StarterPlayer.StarterCharacter:GetChildren()) do
+    if v:IsA("BasePart") then
+        OriginalSizes[v.Name] = v.Size
+    end
+end
+
+-- for x, y in pairs(OriginalSizes) do
+--     print(y.X)
+-- end
+
 local esp = {
     teamcheck = true,
     size = 16,
@@ -35,6 +47,8 @@ local esp = {
         enabled = true,
         color = Color3.fromHex('ff00fb'),
         visible = false,
+        transparency = 0.5,
+        hidehbe = false,
     }
 }
 
@@ -46,9 +60,356 @@ local aim = {
     showFov = true,
     fovColor = Color3.fromHex('ff89a4'),
     fovThickness = 2,
-    key = "MB2",
+    key = "X",
     keyHeld = false,
 }
+
+local misc = {
+    tp = {
+        enabled = false,
+        key = 'H',
+        keyHeld = false,
+        teamcheck = true,
+    },
+    hbe = {
+        enabled = false,
+        size = 10,
+        part = 'head',
+        transparency = 0.5,
+        teamcheck = true,
+    }
+}
+
+local repo = 'https://raw.githubusercontent.com/violin-suzutsuki/LinoriaLib/main/'
+
+local Library = loadstring(game:HttpGet(repo .. 'Library.lua'))()
+local ThemeManager = loadstring(game:HttpGet(repo .. 'addons/ThemeManager.lua'))()
+local SaveManager = loadstring(game:HttpGet(repo .. 'addons/SaveManager.lua'))()
+
+local Window = Library:CreateWindow({
+    Title = 'RatHack Arsenal | (づ｡◕‿‿◕｡)づ',
+    Center = true,
+    AutoShow = true,
+    TabPadding = 8,
+    MenuFadeTime = 0.2
+})
+
+local Tabs = {
+    ['AIM'] = Window:AddTab('Aimbot'),
+    ['ESP'] = Window:AddTab('Visuals'),
+    ['MISC'] = Window:AddTab('Misc'),
+    ['UI Settings'] = Window:AddTab('UI Settings'),
+}
+local MenuGroup = Tabs['UI Settings']:AddLeftGroupbox('Menu')
+MenuGroup:AddButton('Unload', function() Library:Unload() end)
+MenuGroup:AddButton('Dex Explorer', function() loadstring(game:HttpGet("https://raw.githubusercontent.com/infyiff/backup/main/dex.lua"))() end)
+MenuGroup:AddButton('Rejoin', function() game:GetService('TeleportService'):TeleportToPlaceInstance(game.PlaceId, game.JobId) end)
+MenuGroup:AddLabel('Menu bind'):AddKeyPicker('MenuKeybind', { Default = 'Comma', NoUI = true, Text = 'Menu keybind' })
+local uiToggles = Tabs['UI Settings']:AddRightGroupbox('UI Toggles')
+
+local espTab = Tabs['ESP']:AddLeftGroupbox('Esp')
+local chamsTab = Tabs['ESP']:AddRightGroupbox('Chams')
+
+local aimTab = Tabs['AIM']:AddLeftGroupbox('Aimbot')
+
+local teleTab = Tabs['MISC']:AddLeftGroupbox('Teleport')
+local hitboxE = Tabs['MISC']:AddRightGroupbox('Hitbox expander')
+
+uiToggles:AddToggle('Keybinds', {
+    Text = 'Show keybinds',
+    Default = Library.KeybindFrame.Visible,
+    Tooltil = 'ill fucking kill you dude STOP',
+    Callback = function(Value)
+        Library.KeybindFrame.Visible = Value
+    end
+})
+uiToggles:AddToggle('Watermark', {
+    Text = 'Show Watermark',
+    Default = true,
+    Tooltip = 'DUDE NO',
+
+    Callback = function(Value)
+    end
+})
+
+espTab:AddToggle('Team Check',{
+    Text = 'Team Check',
+    Default = esp.teamcheck,
+    Tooltip = 'tooltuah',
+    Callback = function(Value)
+        esp.teamcheck = Value
+    end
+})
+espTab:AddToggle('Boxes', {
+    Default = esp.box.enabled,
+    Text = 'Boxes',
+    Callback = function(Value)
+        esp.box.enabled = Value
+    end
+}):AddColorPicker('Box Color',{
+    Text = 'Box Color',
+    Default = esp.colortext,
+    Tooltip = 'Thanks zopac for the code idiot AGAIN',
+    Callback = function(Value)
+        esp.colortext = Value
+    end
+})
+espTab:AddToggle('names', {
+    Default = esp.name.enabled,
+    Text = 'names',
+    Callback = function(Value)
+        esp.name.enabled = Value
+    end
+}):AddColorPicker('ESPP',{
+    Text = 'Name Color',
+    Default = esp.color,
+    Tooltip = 'Thanks zopac for the code idiot',
+    Callback = function(Value)
+        esp.color = Value
+    end
+})
+espTab:AddDropdown('namelocation', {
+    Text = 'name location',
+    Values = {'Top', "Bottom"},
+    Default = 1,
+    Multi = false,
+    Callback = function(Value)
+        esp.name.side = Value
+    end
+})
+espTab:AddSlider('Name Size', {
+    Text = 'Name Size',
+    Min = 10,
+    Max = 69,
+    Rounding = 1,
+    Default = esp.size,
+    Tooltip = 'hiyanc is the devil',
+    Callback = function(Value)
+        esp.size = Value
+    end
+})
+espTab:AddToggle('HealthBar', {
+    Default = esp.healthbar.enabled,
+    Text = 'healt bar',
+    Callback = function(Value)
+        esp.healthbar.enabled = Value
+    end
+})
+espTab:AddDropdown('HealthLocation', {
+    Values = {'Left', 'Right'},
+    Default = esp.healthbar.side,
+    Multi = false,
+    Text = 'Healthbar Location',
+    Callback = function(Value)
+        esp.healthbar.side = Value
+    end
+})
+
+chamsTab:AddToggle('Chams', {
+    Text = 'Chams (Needs work)',
+    Default = esp.chams.enabled,
+    Callback = function(Value)
+        esp.chams.enabled = Value
+    end
+}):AddColorPicker('chams Color',{
+    Text = 'chams Color',
+    Default = esp.chams.color,
+    Tooltip = 'im crying',
+    Callback = function(Value)
+        esp.chams.color = Value
+    end
+})
+chamsTab:AddToggle('Visible only chams', {
+    Text = 'Vis only chams',
+    Default = esp.chams.visible,
+    Callback = function(Value)
+        esp.chams.visible = Value
+    end
+})
+chamsTab:AddSlider('Chams transparency', {
+    Text = 'Chams transparency',
+    Min = 0,
+    Max = 1,
+    Rounding = 1,
+    Default = esp.chams.transparency,
+    Callback = function(Value)
+        esp.chams.transparency = Value
+    end
+})
+chamsTab:AddToggle('Hide hitbox', {
+    Text = 'Show hitbox expander',
+    Default = esp.chams.hidehbe,
+    Tooltip = 'If hitbox expander transparency is one they will not show up :)',
+    Callback = function(Value)
+        esp.chams.hidehbe = Value
+    end
+})
+
+aimTab:AddToggle('Aimbot', {
+    Text = 'Aimbot',
+    Default = aim.enabled,
+
+    Callback = function(value)
+        aim.enabled = Value
+    end
+})
+aimTab:AddLabel('aimKey'):AddKeyPicker('AimKeyPicker', {
+    Default = aim.key,
+    Mode = 'Hold',
+    Text = 'Aimkey',
+
+    Callback = function(Value)
+    end,
+    Callback = function(Value)
+        aim.key = Value
+    end
+})
+aimTab:AddToggle('Teamcheck', {
+    Default = aim.teamaim,
+    Text = 'Aimbot teamcheck',
+    Callback = function(Value)
+        aim.teamaim = Value
+    end
+})
+aimTab:AddToggle('fovCircle', {
+    Default = aim.showFov,
+    Text = 'Fov circle',
+    Callback = function(Value)
+        aim.showFov = Value
+    end
+}):AddColorPicker('fov circle',{
+    Text = 'fov Color',
+    Default = aim.fovColor,
+    Tooltip = 'im crying',
+    Callback = function(Value)
+        aim.fovColor = Value
+    end
+})
+aimTab:AddSlider('Fov slider', {
+    Text = 'Fov',
+    Default = aim.fov,
+    Min = 5,
+    Max = 300,
+    Rounding = 1,
+    Compact = true,
+
+    Callback = function(Value)
+        aim.fov = Value
+    end
+})
+aimTab:AddSlider('Fov circle thickness', {
+    Text = 'Fov circle thickness',
+    Default = aim.fovThickness,
+    Min = 1,
+    Max = 5,
+    Rounding = 1,
+    Compact = true,
+
+    Callback = function(Value)
+        aim.fovThickness = Value
+    end
+})
+aimTab:AddDropdown('Aim part', {
+    Values = { 'Head', 'UpperTorso', 'LowerTorso', 'RightUpperArm', 'LeftUpperArm', 'RightLowerArm', 'LeftLowerArm', 'RightHand', 'LeftHand', 'RightUpperLeg', 'LeftUpperLeg', 'RightLowerLeg', 'LeftLowerLeg', 'RightFoot', 'LeftFoot' },
+    Default = 1,
+    Multi = false,
+    Text = 'aim part',
+    Tooltip = 'i hate you i hate everything leave me alone',
+    Callback = function(Value)
+        aim.part = Value
+    end
+})
+
+teleTab:AddToggle('Teleport', {
+    Text = 'Teleport',
+    Tooltip = 'Teleport to any player that is inside of fov circle',
+    Default = misc.tp.enabled,
+    Callback = function(Value)
+        misc.tp.enabled = Value
+    end
+})
+teleTab:AddToggle('tpTeamcheck', {
+    Text = 'Teleport Teamcheck',
+    Default = misc.tp.teamcheck,
+    Callback = function(Value)
+        misc.tp.teamcheck = Value
+    end
+})
+teleTab:AddLabel('tpkey'):AddKeyPicker('tpKeyPicker', {
+    Default = misc.tp.key,
+    Mode = 'Hold',
+    Text = 'Teleport key',
+
+    Callback = function(Value)
+    end,
+    Callback = function(Value)
+        misc.tp.key = Value
+    end
+})
+
+hitboxE:AddToggle('Hitbox expander', {
+    Text = 'Expand hitboxes',
+    Default = misc.hbe.enabled,
+    Tooltip = 'Almost silent aim!',
+
+    Callback = function(Value)
+        misc.hbe.enabled = Value
+    end
+})
+hitboxE:AddToggle('Hitbox Teamcheck', {
+    Default = misc.hbe.teamcheck,
+    Text = 'Hitbox expander teamcheck',
+    Callback = function(Value)
+        misc.hbe.teamcheck = Value
+    end
+})
+hitboxE:AddSlider('Hitbox transparency', {
+    Text = 'Hitbox transparency',
+    Min = 0,
+    Max = 1,
+    Rounding = 1,
+    Default = misc.hbe.transparency,
+    Callback = function(Value)
+        misc.hbe.transparency = Value
+    end
+})
+
+Library.ToggleKeybind = Options.MenuKeybind
+
+ThemeManager:SetLibrary(Library)
+SaveManager:SetLibrary(Library)
+SaveManager:IgnoreThemeSettings()
+SaveManager:SetIgnoreIndexes({ 'MenuKeybind' })
+
+writefile('RatHack/themes/RatHack.json', '{"MainColor":"171717","AccentColor":"ff89a4","OutlineColor":"373737","BackgroundColor":"131313","FontColor":"ff89a4"}') -- Could really find a different way to do this
+if not isfile('RatHack/themes/default.txt') then
+    writefile('RatHack/themes/default.txt', 'RatHack.json')
+end
+
+ThemeManager:SetFolder('RatHack')
+SaveManager:SetFolder('RatHack/Arsenal')
+SaveManager:BuildConfigSection(Tabs['UI Settings'])
+ThemeManager:ApplyToTab(Tabs['UI Settings'])
+SaveManager:LoadAutoloadConfig()
+
+Library:SetWatermarkVisibility(Watermark)
+local FrameTimer = tick()
+local FrameCounter = 0;
+local FPS = 60;
+local WatermarkConnection = game:GetService('RunService').RenderStepped:Connect(function()
+    FrameCounter += 1;
+    if (tick() - FrameTimer) >= 1 then
+        FPS = FrameCounter;
+        FrameTimer = tick();
+        FrameCounter = 0;
+    end;
+    Library:SetWatermark(('RatHack Arsenal | %s fps | %s ms'):format(
+        math.floor(FPS),
+        math.floor(game:GetService('Stats').Network.ServerStatsItem['Data Ping']:GetValue())
+    ));
+end);
+
+Library.KeybindFrame.Visible = false;
 
 function createVisuals(player)
     local draw = {}
@@ -138,6 +499,22 @@ function getBestTarget()
     end
 end
 
+function tpToPlayer()
+    local inFov = {}
+    for _, p in players:GetPlayers() do
+        if p.Character.Humanoid.health > 0 then
+            if localPlayer.name ~= p.Name then
+                if localPlayer.team ~= p.Team or not misc.tp.teamcheck then
+                    local pos, onScreen, depth = wtvp(p.Character:FindFirstChild(aim.part).Position)
+                    if (onScreen and ((Vector2.new(pos.X, pos.Y) - camera.ViewportSize/2).Magnitude) <= aim.fov) then
+                        localPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(p.Character.HumanoidRootPart.Position)
+                    end
+                end
+            end
+        end
+    end
+end
+
 local ESPLoop = game:GetService("RunService").RenderStepped:Connect(function()
 
     fovCircle.Visible = aim.showFov
@@ -152,7 +529,50 @@ local ESPLoop = game:GetService("RunService").RenderStepped:Connect(function()
         end
     end
 
+    if misc.tp.enabled then
+        misc.tp.keyHeld = Options.tpKeyPicker.GetState()
+        if misc.tp.keyHeld then
+            tpToPlayer()
+        end
+    end
+
     for l, g in next, espList do
+
+        if misc.hbe.enabled then
+            if l.Team ~= localPlayer.team or not misc.hbe.teamcheck then
+                l.Character.HeadHB.CanCollide = false
+                l.Character.HeadHB.Transparency = misc.hbe.transparency
+                l.Character.HeadHB.Size = Vector3.new(misc.hbe.size, misc.hbe.size, misc.hbe.size)
+                l.Character.HumanoidRootPart.CanCollide = false
+                l.Character.HumanoidRootPart.Transparency = misc.hbe.transparency
+                l.Character.HumanoidRootPart.Size = Vector3.new(misc.hbe.size, misc.hbe.size, misc.hbe.size)
+            else
+                l.Character.HeadHB.Transparency = 1
+                l.Character.HumanoidRootPart.Transparency = 1
+                for i, p in pairs(l.Character:GetChildren()) do -- Should probably make this a function at some point
+                    if p.ClassName == 'Part' or p.ClassName == 'MeshPart' then
+                        if OriginalSizes[p.Name] ~= nil then
+                            if p.Size ~= OriginalSizes[p.Name] then
+                                p.Size = Vector3.new(OriginalSizes[p.Name].X, OriginalSizes[p.Name].Y, OriginalSizes[p.Name].Z)
+                            end
+                        end
+                    end
+                end
+            end
+        else
+            l.Character.HeadHB.Transparency = 1
+            l.Character.HumanoidRootPart.Transparency = 1
+            for i, p in pairs(l.Character:GetChildren()) do
+                if p.ClassName == 'Part' or p.ClassName == 'MeshPart' then
+                    if OriginalSizes[p.Name] ~= nil then
+                        if p.Size ~= OriginalSizes[p.Name] then
+                            p.Size = Vector3.new(OriginalSizes[p.Name].X, OriginalSizes[p.Name].Y, OriginalSizes[p.Name].Z)
+                        end
+                    end
+                end
+            end
+        end
+
         text = g.name
         box = g.box
         boxOutline = g.boxOutline
@@ -255,14 +675,16 @@ local mainloop = game:GetService("RunService").Heartbeat:Connect(function()
                     for k, b in next, v.Character:GetChildren() do
                         if b:IsA("BasePart") and b.Transparency ~= 1 then
                             if not b:FindFirstChild("Glow") and not b:FindFirstChild("Chams") then
-                                local y = Instance.new("BoxHandleAdornment", b)
-                                y.Size = b.Size + Vector3.new(0.25, 0.25, 0.25)
-                                y.Name = "Chams"
-                                y.AlwaysOnTop = not esp.chams.visible
-                                y.ZIndex = 3
-                                y.Adornee = b 
-                                y.Color3 = esp.chams.color
-                                y.Transparency = 0.5
+                                if b.Name ~= 'HeadHB' and b.Name ~= 'HumanoidRootPart' or esp.chams.hidehbe then
+                                    local y = Instance.new("BoxHandleAdornment", b)
+                                    y.Size = b.Size + Vector3.new(0.25, 0.25, 0.25)
+                                    y.Name = "Chams"
+                                    y.AlwaysOnTop = not esp.chams.visible
+                                    y.ZIndex = 3
+                                    y.Adornee = b 
+                                    y.Color3 = esp.chams.color
+                                    y.Transparency = esp.chams.transparency
+                                end
                             end
                         end
                     end
@@ -273,45 +695,7 @@ local mainloop = game:GetService("RunService").Heartbeat:Connect(function()
 end)
 
 -- UI BELOW
-local repo = 'https://raw.githubusercontent.com/violin-suzutsuki/LinoriaLib/main/'
 
-local Library = loadstring(game:HttpGet(repo .. 'Library.lua'))()
-local ThemeManager = loadstring(game:HttpGet(repo .. 'addons/ThemeManager.lua'))()
-local SaveManager = loadstring(game:HttpGet(repo .. 'addons/SaveManager.lua'))()
-
-local Window = Library:CreateWindow({
-    Title = 'RatHack Arsenal | (づ｡◕‿‿◕｡)づ',
-    Center = true,
-    AutoShow = true,
-    TabPadding = 8,
-    MenuFadeTime = 0.2
-})
-
-local Tabs = {
-    ['AIM'] = Window:AddTab('Aimbot'),
-    ['ESP'] = Window:AddTab('Visuals'),
-    ['MISC'] = Window:AddTab('Misc'),
-    ['UI Settings'] = Window:AddTab('UI Settings'),
-}
-
-Library:SetWatermarkVisibility(Watermark)
-local FrameTimer = tick()
-local FrameCounter = 0;
-local FPS = 60;
-local WatermarkConnection = game:GetService('RunService').RenderStepped:Connect(function()
-    FrameCounter += 1;
-    if (tick() - FrameTimer) >= 1 then
-        FPS = FrameCounter;
-        FrameTimer = tick();
-        FrameCounter = 0;
-    end;
-    Library:SetWatermark(('RatHack Arsenal | %s fps | %s ms'):format(
-        math.floor(FPS),
-        math.floor(game:GetService('Stats').Network.ServerStatsItem['Data Ping']:GetValue())
-    ));
-end);
-
-Library.KeybindFrame.Visible = false;
 
 Library:OnUnload(function()
     WatermarkConnection:Disconnect()
@@ -327,6 +711,20 @@ Library:OnUnload(function()
     delLoop:Disconnect()
     delLoop = nil
 
+    -- Reset hitboxes
+    for y, l in pairs(players:GetPlayers()) do
+        for i, p in pairs(l.Character:GetChildren()) do
+            if p.ClassName == 'Part' or p.ClassName == 'MeshPart' then
+                if OriginalSizes[p.Name] ~= nil then
+                    if p.Size ~= OriginalSizes[p.Name] then
+                    --print(OriginalSizes[p.Name].X)
+                        p.Size = Vector3.new(OriginalSizes[p.Name].X, OriginalSizes[p.Name].Y, OriginalSizes[p.Name].Z)
+                    end
+                end
+            end
+        end
+    end
+
     -- Delete ESP
     for _, p in players:GetPlayers() do
         removeEsp(p)
@@ -339,221 +737,3 @@ Library:OnUnload(function()
     print('Unloaded!')
     Library.Unloaded = true
 end)
-
-local MenuGroup = Tabs['UI Settings']:AddLeftGroupbox('Menu')
-MenuGroup:AddButton('Unload', function() Library:Unload() end)
-MenuGroup:AddButton('Dex Explorer', function() loadstring(game:HttpGet("https://raw.githubusercontent.com/infyiff/backup/main/dex.lua"))() end)
-MenuGroup:AddButton('Rejoin', function() game:GetService('TeleportService'):TeleportToPlaceInstance(game.PlaceId, game.JobId) end)
-MenuGroup:AddLabel('Menu bind'):AddKeyPicker('MenuKeybind', { Default = 'Comma', NoUI = true, Text = 'Menu keybind' })
-
-local uiToggles = Tabs['UI Settings']:AddRightGroupbox('UI Toggles')
-uiToggles:AddToggle('Keybinds', {
-    Text = 'Show keybinds',
-    Default = Library.KeybindFrame.Visible,
-    Tooltil = 'ill fucking kill you dude STOP',
-    Callback = function(Value)
-        Library.KeybindFrame.Visible = Value
-    end
-})
-uiToggles:AddToggle('Watermark', {
-    Text = 'Show Watermark',
-    Default = true,
-    Tooltip = 'DUDE NO',
-
-    Callback = function(Value)
-    end
-})
-local Fartbox = Tabs['ESP']:AddLeftGroupbox('Fartbox')
-Fartbox:AddToggle('Team Check',{
-    Text = 'Team Check',
-    Default = esp.teamcheck,
-    Tooltip = 'tooltuah',
-    Callback = function(Value)
-        esp.teamcheck = Value
-    end
-})
-
-Fartbox:AddLabel('Box Color'):AddColorPicker('Box Color',{
-    Text = 'Box Color',
-    Default = esp.colortext,
-    Tooltip = 'Thanks zopac for the code idiot AGAIN',
-    Callback = function(Value)
-        esp.colortext = Value
-    end
-})
-
-Fartbox:AddSlider('Name Size', {
-    Text = 'Name Size',
-    Min = 10,
-    Max = 69,
-    Rounding = 1,
-    Default = esp.size,
-    Tooltip = 'hiyanc is the devil',
-    Callback = function(Value)
-        esp.size = Value
-    end
-})
-
-Fartbox:AddDropdown('HealthLocation', {
-    Values = {'Left', 'Right'},
-    Default = esp.healthbar.side,
-    Multi = false,
-    Text = 'Healthbar Location',
-    Callback = function(Value)
-        esp.healthbar.side = Value
-    end
-})
-
-Fartbox:AddToggle('Boxes', {
-    Default = esp.box.enabled,
-    Text = 'Boxes',
-    Callback = function(Value)
-        esp.box.enabled = Value
-    end
-})
-
-Fartbox:AddToggle('HealthBar', {
-    Default = esp.healthbar.enabled,
-    Text = 'Health Bar',
-    Callback = function(Value)
-        esp.healthbar.enabled = Value
-    end
-})
-
-Fartbox:AddToggle('names', {
-    Default = esp.name.enabled,
-    Text = 'Names',
-    Callback = function(Value)
-        esp.name.enabled = Value
-    end
-}):AddColorPicker('ESPP',{
-    Text = 'Name Color',
-    Default = esp.color,
-    Tooltip = 'Thanks zopac for the code idiot',
-    Callback = function(Value)
-        esp.color = Value
-    end
-})
-
-Fartbox:AddDropdown('namelocation', {
-    Text = 'Name Location',
-    Values = {'Top', "Bottom"},
-    Default = 1,
-    Multi = false,
-    Callback = function(Value)
-        esp.name.side = Value
-    end
-})
-
-Fartbox:AddToggle('Chams', {
-    Text = 'Chams (Needs work)',
-    Default = esp.chams.enabled,
-    Callback = function(Value)
-        esp.chams.enabled = Value
-    end
-}):AddColorPicker('chams Color',{
-    Text = 'chams Color',
-    Default = esp.chams.color,
-    Tooltip = 'im crying',
-    Callback = function(Value)
-        esp.chams.color = Value
-    end
-})
-
-Fartbox:AddToggle('Visible only chams', {
-    Text = 'Vis Chams',
-    Default = esp.chams.visible,
-    Callback = function(Value)
-        esp.chams.visible = Value
-    end
-})
-
-local Fartbox = Tabs['AIM']:AddLeftGroupbox('Fartbox')
-Fartbox:AddToggle('Aimbot', {
-    Text = 'Aimbot',
-    Default = aim.enabled,
-
-    Callback = function(value)
-        aim.enabled = Value
-    end
-})
-Fartbox:AddLabel('Aim Key'):AddKeyPicker('AimKeyPicker', {
-    Default = aim.key,
-    Mode = 'Hold',
-    Text = 'Aim Key',
-
-    Callback = function(Value)
-    end,
-    Callback = function(Value)
-        aim.key = Value
-    end
-})
-
-Fartbox:AddToggle('fovCircle', {
-    Default = aim.showFov,
-    Text = 'Fov circle',
-    Callback = function(Value)
-        aim.showFov = Value
-    end
-}):AddColorPicker('fov circle',{
-    Text = 'fov Color',
-    Default = aim.fovColor,
-    Tooltip = 'im crying',
-    Callback = function(Value)
-        aim.fovColor = Value
-    end
-})
-Fartbox:AddSlider('Fov slider', {
-    Text = 'Fov',
-    Default = aim.fov,
-    Min = 5,
-    Max = 300,
-    Rounding = 1,
-    Compact = true,
-
-    Callback = function(Value)
-        aim.fov = Value
-    end
-})
-
-Fartbox:AddSlider('Fov circle thickness', {
-    Text = 'Fov circle thickness',
-    Default = aim.fovThickness,
-    Min = 1,
-    Max = 5,
-    Rounding = 1,
-    Compact = true,
-
-    Callback = function(Value)
-        aim.fovThickness = Value
-    end
-})
-
-Fartbox:AddDropdown('Aim part', {
-    Values = { 'Head', 'UpperTorso', 'LowerTorso', 'RightUpperArm', 'LeftUpperArm', 'RightLowerArm', 'LeftLowerArm', 'RightHand', 'LeftHand', 'RightUpperLeg', 'LeftUpperLeg', 'RightLowerLeg', 'LeftLowerLeg', 'RightFoot', 'LeftFoot' },
-    Default = 1,
-    Multi = false,
-    Text = 'Aim Part',
-    Tooltip = 'i hate you i hate everything leave me alone',
-    Callback = function(Value)
-        aim.part = Value
-    end
-})
-
-Library.ToggleKeybind = Options.MenuKeybind
-
-ThemeManager:SetLibrary(Library)
-SaveManager:SetLibrary(Library)
-SaveManager:IgnoreThemeSettings()
-SaveManager:SetIgnoreIndexes({ 'MenuKeybind' })
-
-writefile('RatHack/themes/RatHack.json', '{"MainColor":"171717","AccentColor":"ff89a4","OutlineColor":"373737","BackgroundColor":"131313","FontColor":"ff89a4"}') -- Could really find a different way to do this
-if not isfile('RatHack/themes/default.txt') then
-    writefile('RatHack/themes/default.txt', 'RatHack.json')
-end
-
-ThemeManager:SetFolder('RatHack')
-SaveManager:SetFolder('RatHack/Arsenal')
-SaveManager:BuildConfigSection(Tabs['UI Settings'])
-ThemeManager:ApplyToTab(Tabs['UI Settings'])
-SaveManager:LoadAutoloadConfig()
