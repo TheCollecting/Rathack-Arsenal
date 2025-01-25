@@ -1,5 +1,13 @@
 local camera = workspace.CurrentCamera
 
+function isSolara()
+    if getexecutorname() == "Solara" then
+        return true
+    else
+        return false
+    end
+end
+
 local playerList = {}
 local playerText = {}
 local playerBox = {}
@@ -113,7 +121,9 @@ MenuGroup:AddLabel('Menu bind'):AddKeyPicker('MenuKeybind', { Default = 'Comma',
 local uiToggles = Tabs['UI Settings']:AddRightGroupbox('UI Toggles')
 
 local espTab = Tabs['ESP']:AddLeftGroupbox('Esp')
-local chamsTab = Tabs['ESP']:AddRightGroupbox('Chams')
+if not isSolara() then
+    local chamsTab = Tabs['ESP']:AddRightGroupbox('Chams')
+end
 local viewTab = Tabs['ESP']:AddRightGroupbox('Viewmodel')
 
 local aimTab = Tabs['AIM']:AddLeftGroupbox('Aimbot')
@@ -212,45 +222,47 @@ espTab:AddDropdown('HealthLocation', {
     end
 })
 
-chamsTab:AddToggle('Chams', {
-    Text = 'Chams',
-    Default = esp.chams.enabled,
-    Callback = function(Value)
-        esp.chams.enabled = Value
-    end
-}):AddColorPicker('chams Color',{
-    Text = 'chams Color',
-    Default = esp.chams.color,
-    Tooltip = 'im crying',
-    Callback = function(Value)
-        esp.chams.color = Value
-    end
-})
-chamsTab:AddToggle('Visible only chams', {
-    Text = 'Visible only',
-    Default = esp.chams.visible,
-    Callback = function(Value)
-        esp.chams.visible = Value
-    end
-})
-chamsTab:AddToggle('Hide hitbox', {
-    Text = 'Show expanded hitbox',
-    Default = esp.chams.hidehbe,
-    Tooltip = 'If hitbox expander transparency is one they will not show up :)',
-    Callback = function(Value)
-        esp.chams.hidehbe = Value
-    end
-})
-chamsTab:AddSlider('Chams transparency', {
-    Text = 'Chams transparency',
-    Min = 0,
-    Max = 1,
-    Rounding = 1,
-    Default = esp.chams.transparency,
-    Callback = function(Value)
-        esp.chams.transparency = Value
-    end
-})
+if not isSolara() then
+    chamsTab:AddToggle('Chams', {
+        Text = 'Chams',
+        Default = esp.chams.enabled,
+        Callback = function(Value)
+            esp.chams.enabled = Value
+        end
+    }):AddColorPicker('chams Color',{
+        Text = 'chams Color',
+        Default = esp.chams.color,
+        Tooltip = 'im crying',
+        Callback = function(Value)
+            esp.chams.color = Value
+        end
+    })
+    chamsTab:AddToggle('Visible only chams', {
+        Text = 'Visible only',
+        Default = esp.chams.visible,
+        Callback = function(Value)
+            esp.chams.visible = Value
+        end
+    })
+    chamsTab:AddToggle('Hide hitbox', {
+        Text = 'Show expanded hitbox',
+        Default = esp.chams.hidehbe,
+        Tooltip = 'If hitbox expander transparency is one they will not show up :)',
+        Callback = function(Value)
+            esp.chams.hidehbe = Value
+        end
+    })
+    chamsTab:AddSlider('Chams transparency', {
+        Text = 'Chams transparency',
+        Min = 0,
+        Max = 1,
+        Rounding = 1,
+        Default = esp.chams.transparency,
+        Callback = function(Value)
+            esp.chams.transparency = Value
+        end
+    })
+end
 
 viewTab:AddToggle('Hide arms', {
     Text = 'Hide arms',
@@ -784,24 +796,26 @@ local ESPLoop = game:GetService("RunService").RenderStepped:Connect(function()
 end)
 
 -- Pretty sure everything about this is not that great for performance ฅ^•ﻌ•^ฅ
-local mainloop = game:GetService("RunService").Heartbeat:Connect(function()
-    deleteChams()
-    if esp.chams.enabled then
-        for g, v in next, players:GetPlayers() do
-            if localPlayer.team ~= v.Team or not esp.teamcheck then
-                if v.Character and v.Character:FindFirstChild("HumanoidRootPart") and  v.Character:FindFirstChild("Humanoid") and v.Character:FindFirstChild("Humanoid").Health ~= 0 and v.Character.name ~= localPlayer.Character.name then
-                    for k, b in next, v.Character:GetChildren() do
-                        if b:IsA("BasePart") and b.Transparency ~= 1 then
-                            if not b:FindFirstChild("Glow") and not b:FindFirstChild("Chams") then
-                                if b.Name ~= 'HeadHB' and b.Name ~= 'HumanoidRootPart' or esp.chams.hidehbe then
-                                    local y = Instance.new("BoxHandleAdornment", b)
-                                    y.Size = b.Size + Vector3.new(0.25, 0.25, 0.25)
-                                    y.Name = "Chams"
-                                    y.AlwaysOnTop = not esp.chams.visible
-                                    y.ZIndex = 3
-                                    y.Adornee = b 
-                                    y.Color3 = esp.chams.color
-                                    y.Transparency = esp.chams.transparency
+if not isSolara() then
+    local mainloop = game:GetService("RunService").Heartbeat:Connect(function()
+        deleteChams()
+        if esp.chams.enabled then
+            for g, v in next, players:GetPlayers() do
+                if localPlayer.team ~= v.Team or not esp.teamcheck then
+                    if v.Character and v.Character:FindFirstChild("HumanoidRootPart") and  v.Character:FindFirstChild("Humanoid") and v.Character:FindFirstChild("Humanoid").Health ~= 0 and v.Character.name ~= localPlayer.Character.name then
+                        for k, b in next, v.Character:GetChildren() do
+                            if b:IsA("BasePart") and b.Transparency ~= 1 then
+                                if not b:FindFirstChild("Glow") and not b:FindFirstChild("Chams") then
+                                    if b.Name ~= 'HeadHB' and b.Name ~= 'HumanoidRootPart' or esp.chams.hidehbe then
+                                        local y = Instance.new("BoxHandleAdornment", b)
+                                        y.Size = b.Size + Vector3.new(0.25, 0.25, 0.25)
+                                        y.Name = "Chams"
+                                        y.AlwaysOnTop = not esp.chams.visible
+                                        y.ZIndex = 3
+                                        y.Adornee = b 
+                                        y.Color3 = esp.chams.color
+                                        y.Transparency = esp.chams.transparency
+                                    end
                                 end
                             end
                         end
@@ -809,19 +823,23 @@ local mainloop = game:GetService("RunService").Heartbeat:Connect(function()
                 end
             end
         end
-    end
-end)
+    end)
+else
+    Library:Notify("Performance is limited on solara requiring chams to not be available", 10)
+end
 
 -- UI BELOW
 
 
 Library:OnUnload(function()
     WatermarkConnection:Disconnect()
-
-    ESPLoop:Disconnect()
+    if ESPLoop ~= nil then
+        ESPLoop:Disconnect()
+    end
     ESPLoop = nil
-
-    mainloop:Disconnect()
+    if mainloop ~= nil then
+        mainloop:Disconnect()
+    end
     mainloop = nil
 
     addLoop:Disconnect()
