@@ -119,11 +119,13 @@ MenuGroup:AddButton('Dex Explorer', function() loadstring(game:HttpGet("https://
 MenuGroup:AddButton('Rejoin', function() game:GetService('TeleportService'):TeleportToPlaceInstance(game.PlaceId, game.JobId) end)
 MenuGroup:AddLabel('Menu bind'):AddKeyPicker('MenuKeybind', { Default = 'Comma', NoUI = true, Text = 'Menu keybind' })
 local uiToggles = Tabs['UI Settings']:AddRightGroupbox('UI Toggles')
-
+local chamsTab = ""
 local espTab = Tabs['ESP']:AddLeftGroupbox('Esp')
-if not isSolara() then
-    local chamsTab = Tabs['ESP']:AddRightGroupbox('Chams')
+local chamsTab
+if isSolara() == false then
+    chamsTab = Tabs['ESP']:AddRightGroupbox('Chams')
 end
+
 local viewTab = Tabs['ESP']:AddRightGroupbox('Viewmodel')
 
 local aimTab = Tabs['AIM']:AddLeftGroupbox('Aimbot')
@@ -222,7 +224,7 @@ espTab:AddDropdown('HealthLocation', {
     end
 })
 
-if not isSolara() then
+if isSolara() == false then
     chamsTab:AddToggle('Chams', {
         Text = 'Chams',
         Default = esp.chams.enabled,
@@ -796,8 +798,9 @@ local ESPLoop = game:GetService("RunService").RenderStepped:Connect(function()
 end)
 
 -- Pretty sure everything about this is not that great for performance ฅ^•ﻌ•^ฅ
-if not isSolara() then
-    local mainloop = game:GetService("RunService").Heartbeat:Connect(function()
+local mainloop
+if isSolara() == false then
+    mainloop = game:GetService("RunService").Heartbeat:Connect(function()
         deleteChams()
         if esp.chams.enabled then
             for g, v in next, players:GetPlayers() do
@@ -833,13 +836,11 @@ end
 
 Library:OnUnload(function()
     WatermarkConnection:Disconnect()
-    if ESPLoop ~= nil then
-        ESPLoop:Disconnect()
-    end
+
+    ESPLoop:Disconnect()
     ESPLoop = nil
-    if mainloop ~= nil then
-        mainloop:Disconnect()
-    end
+
+    mainloop:Disconnect()
     mainloop = nil
 
     addLoop:Disconnect()
