@@ -163,7 +163,7 @@ espTab:AddToggle('Boxes', {
 })
 espTab:AddToggle('names', {
     Default = esp.name.enabled,
-    Text = 'names',
+    Text = 'Names',
     Callback = function(Value)
         esp.name.enabled = Value
     end
@@ -176,7 +176,7 @@ espTab:AddToggle('names', {
     end
 })
 espTab:AddDropdown('namelocation', {
-    Text = 'name location',
+    Text = 'Name location',
     Values = {'Top', "Bottom"},
     Default = 1,
     Multi = false,
@@ -197,7 +197,7 @@ espTab:AddSlider('Name Size', {
 })
 espTab:AddToggle('HealthBar', {
     Default = esp.healthbar.enabled,
-    Text = 'healt bar',
+    Text = 'Health bar',
     Callback = function(Value)
         esp.healthbar.enabled = Value
     end
@@ -213,7 +213,7 @@ espTab:AddDropdown('HealthLocation', {
 })
 
 chamsTab:AddToggle('Chams', {
-    Text = 'Chams (Needs work)',
+    Text = 'Chams',
     Default = esp.chams.enabled,
     Callback = function(Value)
         esp.chams.enabled = Value
@@ -227,10 +227,18 @@ chamsTab:AddToggle('Chams', {
     end
 })
 chamsTab:AddToggle('Visible only chams', {
-    Text = 'Vis only chams',
+    Text = 'Visible only',
     Default = esp.chams.visible,
     Callback = function(Value)
         esp.chams.visible = Value
+    end
+})
+chamsTab:AddToggle('Hide hitbox', {
+    Text = 'Show expanded hitbox',
+    Default = esp.chams.hidehbe,
+    Tooltip = 'If hitbox expander transparency is one they will not show up :)',
+    Callback = function(Value)
+        esp.chams.hidehbe = Value
     end
 })
 chamsTab:AddSlider('Chams transparency', {
@@ -241,14 +249,6 @@ chamsTab:AddSlider('Chams transparency', {
     Default = esp.chams.transparency,
     Callback = function(Value)
         esp.chams.transparency = Value
-    end
-})
-chamsTab:AddToggle('Hide hitbox', {
-    Text = 'Show hitbox expander',
-    Default = esp.chams.hidehbe,
-    Tooltip = 'If hitbox expander transparency is one they will not show up :)',
-    Callback = function(Value)
-        esp.chams.hidehbe = Value
     end
 })
 
@@ -267,8 +267,7 @@ aimTab:AddToggle('Aimbot', {
     Callback = function(Value)
         aim.enabled = Value
     end
-})
-aimTab:AddLabel('aimKey'):AddKeyPicker('AimKeyPicker', {
+}):AddKeyPicker('AimKeyPicker', {
     Default = aim.key,
     Mode = 'Hold',
     Text = 'Aimkey',
@@ -279,13 +278,25 @@ aimTab:AddLabel('aimKey'):AddKeyPicker('AimKeyPicker', {
         aim.key = Value
     end
 })
+
 aimTab:AddToggle('Teamcheck', {
     Default = aim.teamaim,
-    Text = 'Aimbot teamcheck',
+    Text = 'Teamcheck',
     Callback = function(Value)
         aim.teamaim = Value
     end
 })
+aimTab:AddDropdown('Aim part', {
+    Values = { 'Head', 'UpperTorso', 'LowerTorso', 'RightUpperArm', 'LeftUpperArm', 'RightLowerArm', 'LeftLowerArm', 'RightHand', 'LeftHand', 'RightUpperLeg', 'LeftUpperLeg', 'RightLowerLeg', 'LeftLowerLeg', 'RightFoot', 'LeftFoot' },
+    Default = 1,
+    Multi = false,
+    Text = 'Part',
+    Tooltip = 'i hate you i hate everything leave me alone',
+    Callback = function(Value)
+        aim.part = Value
+    end
+})
+
 aimTab:AddToggle('fovCircle', {
     Default = aim.showFov,
     Text = 'Fov circle',
@@ -324,20 +335,10 @@ aimTab:AddSlider('Fov circle thickness', {
         aim.fovThickness = Value
     end
 })
-aimTab:AddDropdown('Aim part', {
-    Values = { 'Head', 'UpperTorso', 'LowerTorso', 'RightUpperArm', 'LeftUpperArm', 'RightLowerArm', 'LeftLowerArm', 'RightHand', 'LeftHand', 'RightUpperLeg', 'LeftUpperLeg', 'RightLowerLeg', 'LeftLowerLeg', 'RightFoot', 'LeftFoot' },
-    Default = 1,
-    Multi = false,
-    Text = 'aim part',
-    Tooltip = 'i hate you i hate everything leave me alone',
-    Callback = function(Value)
-        aim.part = Value
-    end
-})
 
 aimExtra:AddButton({
-    Text = 'Make all guns high firerate',
-    Tooltip = 'Requires rejoin to stop',
+    Text = 'Firerate boost',
+    Tooltip = 'Makes firerate insane. Requires rejoin to stop',
     Func = function()
         for _, q in RepStorage.Weapons:GetChildren() do
             if q:FindFirstChild("FireRate") then
@@ -347,51 +348,12 @@ aimExtra:AddButton({
     end
 })
 aimExtra:AddButton({
-    Text = 'Make all Automatic',
+    Text = 'Force Automatic',
     Tooltip = 'Requires rejoin to stop',
     Func = function()
         for _, q in RepStorage.Weapons:GetChildren() do
             if q:FindFirstChild("Auto") then
                 q.Auto.Value = true
-            end
-        end
-    end
-})
-aimExtra:AddButton({
-    Text = 'No recoil',
-    Tooltip = 'Requires rejoin to stop',
-    Func = function()
-        for _, q in RepStorage.Weapons:GetChildren() do
-            if q:FindFirstChild("RecoilControl") then
-                q.RecoilControl = 0
-            end
-        end
-    end
-})
-aimExtra:AddButton({
-    Text = "Fast reload",
-    Tooltip = 'Requires rejoin to stop',
-    Func = function()
-        for _, q in RepStorage.Weapons:GetChildren() do
-            if q:FindFirstChild("ReloadTime") then
-                q.ReloadTime = 0.1
-            end
-        end
-    end
-})
-aimExtra:AddButton({
-    Text = "No spread",
-    Tooltip = 'Requires rejoin to stop',
-    Func = function()
-        for _, q in RepStorage.Weapons:GetChildren() do
-            if q:FindFirstChild("MaxSpread") then
-                q.MaxSpread = 0
-            end
-            if q:FindFirstChild("Spread") then
-                q.Spread = 0
-            end
-            if q:FindFirstChild("SpreadRecovery") then
-                q.SpreadRecovery = 0
             end
         end
     end
@@ -404,22 +366,7 @@ teleTab:AddToggle('TeleportToggle',{
     Callback = function(Value)
         misc.tp.enabled = Value
     end
-})
-teleTab:AddToggle('tpTeamcheck', {
-    Text = 'Teleport Teamcheck',
-    Default = misc.tp.teamcheck,
-    Callback = function(Value)
-        misc.tp.teamcheck = Value
-    end
-})
-teleTab:AddToggle('tpaimto', {
-    Text = 'Teleport aimto',
-    Default = misc.tp.aimto,
-    Callback = function(Value)
-        misc.tp.aimto = Value
-    end
-})
-teleTab:AddLabel('tpkey'):AddKeyPicker('tpKeyPicker', {
+}):AddKeyPicker('tpKeyPicker', {
     Default = misc.tp.key,
     Mode = 'Hold',
     Text = 'Teleport key',
@@ -430,8 +377,27 @@ teleTab:AddLabel('tpkey'):AddKeyPicker('tpKeyPicker', {
         misc.tp.key = Value
     end
 })
+
+teleTab:AddToggle('tpTeamcheck', {
+    Text = 'Teamcheck',
+    Default = misc.tp.teamcheck,
+    Callback = function(Value)
+        misc.tp.teamcheck = Value
+    end
+})
+
+teleTab:AddToggle('tpaimto', {
+    Text = 'Aim to',
+    Tooltip = 'Aim to target after tp',
+    Default = misc.tp.aimto,
+    Callback = function(Value)
+        misc.tp.aimto = Value
+    end
+})
+
+teleTab:AddDivider()
 teleTab:AddToggle('Target tp', {
-    Text = 'Target tp',
+    Text = 'Auto tp',
     Default = misc.tp.targetTp,
     Tooltip = 'Auto tps to target',
     Callback = function(Value)
@@ -449,10 +415,9 @@ teleTab:AddToggle('Target tp', {
         misc.tp.targetTpKey = Value
     end
 })
-
 teleTab:AddDropdown('tpTarget', {
     SpecialType = 'Player',
-    Text = 'Target player dropdown',
+    Text = 'Target',
     Callback = function(Value)
         misc.tp.target = Value
     end
@@ -565,6 +530,7 @@ end
 local fovCircle = Drawing.new('Circle')
 fovCircle.Position = camera.ViewportSize / 2
 fovCircle.Thickness = aim.fovThickness
+fovCircle.Filled = false
 
 local function removeEsp(player)
     if rawget(espList, player) then
