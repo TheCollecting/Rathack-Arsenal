@@ -45,7 +45,10 @@ local esp = {
         visible = false,
         transparency = 0.5,
         hidehbe = false,
-    }
+    },
+    misc = {
+        arms = true,
+    },
 }
 
 local aim = {
@@ -66,6 +69,10 @@ local misc = {
         key = 'H',
         keyHeld = false,
         teamcheck = true,
+        targetTp = false,
+        target = '',
+        targetTpKey = 'C',
+        targetTpHeld = false,
     },
     hbe = {
         enabled = false,
@@ -105,6 +112,7 @@ local uiToggles = Tabs['UI Settings']:AddRightGroupbox('UI Toggles')
 
 local espTab = Tabs['ESP']:AddLeftGroupbox('Esp')
 local chamsTab = Tabs['ESP']:AddRightGroupbox('Chams')
+local viewTab = Tabs['ESP']:AddRightGroupbox('Viewmodel')
 
 local aimTab = Tabs['AIM']:AddLeftGroupbox('Aimbot')
 
@@ -241,6 +249,14 @@ chamsTab:AddToggle('Hide hitbox', {
     end
 })
 
+viewTab:AddToggle('Hide arms', {
+    Text = 'Hide arms',
+    Default = esp.misc.arms,
+    Callback = function(Value)
+        esp.misc.arms = Value
+    end
+})
+
 aimTab:AddToggle('Aimbot', {
     Text = 'Aimbot',
     Default = aim.enabled,
@@ -340,6 +356,33 @@ teleTab:AddLabel('tpkey'):AddKeyPicker('tpKeyPicker', {
     end,
     Callback = function(Value)
         misc.tp.key = Value
+    end
+})
+teleTab:AddToggle('Target tp', {
+    Text = 'Target tp',
+    Default = misc.tp.targetTp,
+    Tooltip = 'Auto tps to target',
+    Callback = function(Value)
+        misc.tp.targetTp = Value
+    end
+}):AddKeyPicker('targetTpKey', {
+    Default = misc.tp.targetTpKey,
+    Mode = 'Toggle',
+    Text = 'Target tp key',
+    SyncToggleState = true,
+
+    Callback = function(Value)
+    end,
+    Callback = function(Value)
+        misc.tp.targetTpKey = Value
+    end
+})
+
+teleTab:AddDropdown('tpTarget', {
+    SpecialType = 'Player',
+    Text = 'Target player dropdown',
+    Callback = function(Value)
+        misc.tp.target = Value
     end
 })
 
@@ -521,12 +564,34 @@ function tpToPlayer()
     end
 end
 
-local ESPLoop = game:GetService("RunService").RenderStepped:Connect(function()
+function tpToTarget()
+    local inFov = {}
+    for _, p in players:GetPlayers() do
+        if p.Character.Humanoid.health > 0 then
+            if localPlayer.name ~= p.Name then
+                if p.Name == misc.tp.target then
+                    local pos, onScreen, depth = wtvp(p.Character:FindFirstChild(aim.part).Position)
+                    localPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(p.Character.HumanoidRootPart.Position)
+                end
+            end
+        end
+    end
+end
 
+local ESPLoop = game:GetService("RunService").RenderStepped:Connect(function()
     fovCircle.Visible = aim.showFov
     fovCircle.Color = aim.fovColor
     fovCircle.Radius = aim.fov
     fovCircle.Thickness = aim.fovThickness
+
+
+    if esp.misc.arms then
+        if camera:FindFirstChild('Arms') then
+            if camera.Arms:FindFirstChild('CSSArms') then
+                camera.Arms:FindFirstChild('CSSArms'):Destroy()
+            end
+        end
+    end
 
     if aim.enabled then
         aim.keyHeld = Options.AimKeyPicker:GetState()
@@ -540,6 +605,10 @@ local ESPLoop = game:GetService("RunService").RenderStepped:Connect(function()
         if misc.tp.keyHeld then
             tpToPlayer()
         end
+    end
+
+    if misc.tp.targetTp and misc.tp.target ~= nil then
+        tpToTarget()
     end
 
     for l, g in next, espList do
