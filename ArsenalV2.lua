@@ -24,10 +24,6 @@ for i, v in pairs(StarterPlayer.StarterCharacter:GetChildren()) do
     end
 end
 
--- for x, y in pairs(OriginalSizes) do
---     print(y.X)
--- end
-
 local esp = {
     teamcheck = true,
     size = 16,
@@ -249,7 +245,7 @@ aimTab:AddToggle('Aimbot', {
     Text = 'Aimbot',
     Default = aim.enabled,
 
-    Callback = function(value)
+    Callback = function(Value)
         aim.enabled = Value
     end
 })
@@ -371,6 +367,16 @@ hitboxE:AddSlider('Hitbox transparency', {
     Default = misc.hbe.transparency,
     Callback = function(Value)
         misc.hbe.transparency = Value
+    end
+})
+hitboxE:AddSlider('Hitbox size', {
+    Text = 'Hitbox size',
+    Min = 1,
+    Max = 40,
+    Rounding = 1,
+    Default = misc.hbe.size,
+    Callback = function(Value)
+        misc.hbe.size = Value
     end
 })
 
@@ -523,7 +529,7 @@ local ESPLoop = game:GetService("RunService").RenderStepped:Connect(function()
     fovCircle.Thickness = aim.fovThickness
 
     if aim.enabled then
-        aim.keyHeld = Options.AimKeyPicker.GetState()
+        aim.keyHeld = Options.AimKeyPicker:GetState()
         if aim.keyHeld then
             getBestTarget()
         end
@@ -717,7 +723,6 @@ Library:OnUnload(function()
             if p.ClassName == 'Part' or p.ClassName == 'MeshPart' then
                 if OriginalSizes[p.Name] ~= nil then
                     if p.Size ~= OriginalSizes[p.Name] then
-                    --print(OriginalSizes[p.Name].X)
                         p.Size = Vector3.new(OriginalSizes[p.Name].X, OriginalSizes[p.Name].Y, OriginalSizes[p.Name].Z)
                     end
                 end
