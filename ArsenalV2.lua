@@ -15,6 +15,7 @@ local camera = workspace.CurrentCamera
 local wtvp = function(...) local a, b = camera.WorldToViewportPoint(camera, ...) return Vector2.new(a.X, a.Y), b, a.Z end
 local players = game:GetService("Players")
 local localplayer = players.LocalPlayer
+local RepStorage = game:GetService("ReplicatedStorage")
 
 local StarterPlayer = game:GetService("StarterPlayer")
 local OriginalSizes = {}
@@ -73,6 +74,7 @@ local misc = {
         target = '',
         targetTpKey = 'C',
         targetTpHeld = false,
+        aimto = true,
     },
     hbe = {
         enabled = false,
@@ -115,6 +117,7 @@ local chamsTab = Tabs['ESP']:AddRightGroupbox('Chams')
 local viewTab = Tabs['ESP']:AddRightGroupbox('Viewmodel')
 
 local aimTab = Tabs['AIM']:AddLeftGroupbox('Aimbot')
+local aimExtra = Tabs['AIM']:AddRightGroupbox('Extra')
 
 local teleTab = Tabs['MISC']:AddLeftGroupbox('Teleport')
 local hitboxE = Tabs['MISC']:AddRightGroupbox('Hitbox expander')
@@ -332,7 +335,69 @@ aimTab:AddDropdown('Aim part', {
     end
 })
 
-teleTab:AddToggle('Teleport', {
+aimExtra:AddButton({
+    Text = 'Make all guns high firerate',
+    Tooltip = 'Requires rejoin to stop',
+    Func = function()
+        for _, q in RepStorage.Weapons:GetChildren() do
+            if q:FindFirstChild("FireRate") then
+                q.FireRate.Value = 0.025
+            end
+        end
+    end
+})
+aimExtra:AddButton({
+    Text = 'Make all Automatic',
+    Tooltip = 'Requires rejoin to stop',
+    Func = function()
+        for _, q in RepStorage.Weapons:GetChildren() do
+            if q:FindFirstChild("Auto") then
+                q.Auto.Value = true
+            end
+        end
+    end
+})
+aimExtra:AddButton({
+    Text = 'No recoil',
+    Tooltip = 'Requires rejoin to stop',
+    Func = function()
+        for _, q in RepStorage.Weapons:GetChildren() do
+            if q:FindFirstChild("RecoilControl") then
+                q.RecoilControl = 0
+            end
+        end
+    end
+})
+aimExtra:AddButton({
+    Text = "Fast reload",
+    Tooltip = 'Requires rejoin to stop',
+    Func = function()
+        for _, q in RepStorage.Weapons:GetChildren() do
+            if q:FindFirstChild("ReloadTime") then
+                q.ReloadTime = 0.1
+            end
+        end
+    end
+})
+aimExtra:AddButton({
+    Text = "No spread",
+    Tooltip = 'Requires rejoin to stop',
+    Func = function()
+        for _, q in RepStorage.Weapons:GetChildren() do
+            if q:FindFirstChild("MaxSpread") then
+                q.MaxSpread = 0
+            end
+            if q:FindFirstChild("Spread") then
+                q.Spread = 0
+            end
+            if q:FindFirstChild("SpreadRecovery") then
+                q.SpreadRecovery = 0
+            end
+        end
+    end
+})
+
+teleTab:AddToggle('TeleportToggle',{
     Text = 'Teleport',
     Tooltip = 'Teleport to any player that is inside of fov circle',
     Default = misc.tp.enabled,
@@ -345,6 +410,13 @@ teleTab:AddToggle('tpTeamcheck', {
     Default = misc.tp.teamcheck,
     Callback = function(Value)
         misc.tp.teamcheck = Value
+    end
+})
+teleTab:AddToggle('tpaimto', {
+    Text = 'Teleport aimto',
+    Default = misc.tp.aimto,
+    Callback = function(Value)
+        misc.tp.aimto = Value
     end
 })
 teleTab:AddLabel('tpkey'):AddKeyPicker('tpKeyPicker', {
@@ -549,7 +621,6 @@ function getBestTarget()
 end
 
 function tpToPlayer()
-    local inFov = {}
     for _, p in players:GetPlayers() do
         if p.Character.Humanoid.health > 0 then
             if localPlayer.name ~= p.Name then
@@ -557,6 +628,10 @@ function tpToPlayer()
                     local pos, onScreen, depth = wtvp(p.Character:FindFirstChild(aim.part).Position)
                     if (onScreen and ((Vector2.new(pos.X, pos.Y) - camera.ViewportSize/2).Magnitude) <= aim.fov) then
                         localPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(p.Character.HumanoidRootPart.Position)
+                        if misc.tp.aimto then
+                            wait(0.1)
+                            workspace.CurrentCamera.CFrame = CFrame.new(workspace.CurrentCamera.CFrame.Position, p.Character:FindFirstChild(aim.part).Position)
+                        end
                     end
                 end
             end
@@ -565,13 +640,16 @@ function tpToPlayer()
 end
 
 function tpToTarget()
-    local inFov = {}
     for _, p in players:GetPlayers() do
         if p.Character.Humanoid.health > 0 then
             if localPlayer.name ~= p.Name then
                 if p.Name == misc.tp.target then
                     local pos, onScreen, depth = wtvp(p.Character:FindFirstChild(aim.part).Position)
                     localPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(p.Character.HumanoidRootPart.Position)
+                    if misc.tp.aimto then
+                        wait(0.1)
+                        workspace.CurrentCamera.CFrame = CFrame.new(workspace.CurrentCamera.CFrame.Position, p.Character:FindFirstChild(aim.part).Position)
+                    end
                 end
             end
         end
@@ -583,7 +661,6 @@ local ESPLoop = game:GetService("RunService").RenderStepped:Connect(function()
     fovCircle.Color = aim.fovColor
     fovCircle.Radius = aim.fov
     fovCircle.Thickness = aim.fovThickness
-
 
     if esp.misc.arms then
         if camera:FindFirstChild('Arms') then
