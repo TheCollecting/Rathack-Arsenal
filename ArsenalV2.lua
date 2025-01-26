@@ -1,97 +1,52 @@
-local camera = workspace.CurrentCamera
+local localPlayer = game:GetService("Players").localPlayer
 
-function isSolara()
-    if getexecutorname() == "Solara" then
-        return true
-    else
-        return false
+local PlayerList = {}
+for x, y in pairs(game:GetService("Players"):GetChildren()) do
+    PlayerList[y.Name] = y.Team
+end
+
+local Chams = {}
+for x,y in pairs(localPlayer.PlayerGui:GetChildren()) do
+    if y.ClassName == "Highlight" then
+        table.insert(Chams, y)
     end
 end
 
-local playerList = {}
-local playerText = {}
-local playerBox = {}
-local healthBars = {}
-local espList = {}
-local Folder = Instance.new('Folder')
-local chamList = {}
-local localPlayer = game:GetService("Players").LocalPlayer
-local round = function(...) local a = {} for i,v in next, table.pack(...) do a[i] = math.round(v) end return unpack(a) end
-local CurrentCamera = workspace.CurrentCamera
-local tan, rad = math.tan, math.rad
-local camera = workspace.CurrentCamera
-local wtvp = function(...) local a, b = camera.WorldToViewportPoint(camera, ...) return Vector2.new(a.X, a.Y), b, a.Z end
-local players = game:GetService("Players")
-local localplayer = players.LocalPlayer
-local RepStorage = game:GetService("ReplicatedStorage")
+local Settings = {
+    Chams = {
+        Enabled = true,
+        Color = Color3.fromHex('ff89a4'),
+        Transparency = 0.5,
+        Teammates = true,
+        Outline = {
+            Color = Color3.fromHex('ff89a4'),
+            Transparency = 0.5,
+        },
+    },
+}
 
-local StarterPlayer = game:GetService("StarterPlayer")
-local OriginalSizes = {}
-for i, v in pairs(StarterPlayer.StarterCharacter:GetChildren()) do
-    if v:IsA("BasePart") then
-        OriginalSizes[v.Name] = v.Size
+function UpdateChams()
+    for _, p in pairs(Chams) do
+        if Settings.Chams.Enabled then
+            if p.Adornee ~= nil then
+                if PlayerList[p.Adornee.Name] ~= localPlayer.Team then
+                    p.Enabled = true
+                else
+                    p.Enabled = Settings.Chams.Teammates
+                end
+            end
+            p.FillColor = Settings.Chams.Color
+            p.FillTransparency = Settings.Chams.Transparency
+
+            p.OutlineColor = Settings.Chams.Outline.Color
+            p.OutlineTransparency = Settings.Chams.Outline.Transparency
+            p.DepthMode = 'AlwaysOnTop'
+        else
+            p.Enabled = false
+        end
     end
 end
 
-local esp = {
-    teamcheck = true,
-    size = 16,
-    color = Color3.fromHex('ff00fb'),
-    colortext = Color3.fromHex('ff00fb'),
-    name = {
-        enabled = true,
-        side = 'Top',
-    },
-    healthbar = {
-        side = 'Left',
-    },
-    box = {
-        enabled = true,
-    },
-    chams = {
-        enabled = true,
-        color = Color3.fromHex('ff00fb'),
-        visible = false,
-        transparency = 0.5,
-        hidehbe = false,
-    },
-    misc = {
-        arms = true,
-    },
-}
-
-local aim = {
-    enabled = true,
-    teamaim = true,
-    part = "Head",
-    fov = 50,
-    showFov = true,
-    fovColor = Color3.fromHex('ff89a4'),
-    fovThickness = 2,
-    key = "X",
-    keyHeld = false,
-}
-
-local misc = {
-    tp = {
-        enabled = false,
-        key = 'H',
-        keyHeld = false,
-        teamcheck = true,
-        targetTp = false,
-        target = '',
-        targetTpKey = 'C',
-        targetTpHeld = false,
-        aimto = true,
-    },
-    hbe = {
-        enabled = false,
-        size = 10,
-        part = 'head',
-        transparency = 0.5,
-        teamcheck = true,
-    }
-}
 
 local repo = 'https://raw.githubusercontent.com/violin-suzutsuki/LinoriaLib/main/'
 
@@ -108,371 +63,86 @@ local Window = Library:CreateWindow({
 })
 
 local Tabs = {
-    ['AIM'] = Window:AddTab('Aimbot'),
-    ['ESP'] = Window:AddTab('Visuals'),
-    ['MISC'] = Window:AddTab('Misc'),
+    ['CHAMS'] = Window:AddTab('Chams'),
     ['UI Settings'] = Window:AddTab('UI Settings'),
 }
+
 local MenuGroup = Tabs['UI Settings']:AddLeftGroupbox('Menu')
 MenuGroup:AddButton('Unload', function() Library:Unload() end)
 MenuGroup:AddButton('Dex Explorer', function() loadstring(game:HttpGet("https://raw.githubusercontent.com/infyiff/backup/main/dex.lua"))() end)
 MenuGroup:AddButton('Rejoin', function() game:GetService('TeleportService'):TeleportToPlaceInstance(game.PlaceId, game.JobId) end)
 MenuGroup:AddLabel('Menu bind'):AddKeyPicker('MenuKeybind', { Default = 'Comma', NoUI = true, Text = 'Menu keybind' })
-local uiToggles = Tabs['UI Settings']:AddRightGroupbox('UI Toggles')
-local chamsTab = ""
-local espTab = Tabs['ESP']:AddLeftGroupbox('Esp')
-local chamsTab
-if isSolara() == false then
-    chamsTab = Tabs['ESP']:AddRightGroupbox('Chams')
-end
 
-local viewTab = Tabs['ESP']:AddRightGroupbox('Viewmodel')
-
-local aimTab = Tabs['AIM']:AddLeftGroupbox('Aimbot')
-local aimExtra = Tabs['AIM']:AddRightGroupbox('Extra')
-
-local teleTab = Tabs['MISC']:AddLeftGroupbox('Teleport')
-local hitboxE = Tabs['MISC']:AddRightGroupbox('Hitbox expander')
-
-uiToggles:AddToggle('Keybinds', {
-    Text = 'Show keybinds',
-    Default = Library.KeybindFrame.Visible,
-    Tooltil = 'ill fucking kill you dude STOP',
+ChamsTab =  Tabs['CHAMS']:AddLeftGroupbox('Chams')
+ChamsTab:AddToggle('ChamsToggle', {
+    Text = 'Enabled',
+    Default = Settings.Chams.Enabled,
     Callback = function(Value)
-        Library.KeybindFrame.Visible = Value
+        Settings.Chams.Enabled = Value
     end
-})
-uiToggles:AddToggle('Watermark', {
-    Text = 'Show Watermark',
-    Default = true,
-    Tooltip = 'DUDE NO',
+}):AddColorPicker('ChamsColorPicker', {
+    Title = 'Chams color',
+    Default = Settings.Chams.Color,
 
     Callback = function(Value)
+        Settings.Chams.Color = Value
     end
 })
-
-espTab:AddToggle('Team Check',{
-    Text = 'Team Check',
-    Default = esp.teamcheck,
-    Tooltip = 'tooltuah',
-    Callback = function(Value)
-        esp.teamcheck = Value
-    end
-})
-espTab:AddToggle('Boxes', {
-    Default = esp.box.enabled,
-    Text = 'Boxes',
-    Callback = function(Value)
-        esp.box.enabled = Value
-    end
-}):AddColorPicker('Box Color',{
-    Text = 'Box Color',
-    Default = esp.colortext,
-    Tooltip = 'Thanks zopac for the code idiot AGAIN',
-    Callback = function(Value)
-        esp.colortext = Value
-    end
-})
-espTab:AddToggle('names', {
-    Default = esp.name.enabled,
-    Text = 'Names',
-    Callback = function(Value)
-        esp.name.enabled = Value
-    end
-}):AddColorPicker('ESPP',{
-    Text = 'Name Color',
-    Default = esp.color,
-    Tooltip = 'Thanks zopac for the code idiot',
-    Callback = function(Value)
-        esp.color = Value
-    end
-})
-espTab:AddDropdown('namelocation', {
-    Text = 'Name location',
-    Values = {'Top', "Bottom"},
-    Default = 1,
-    Multi = false,
-    Callback = function(Value)
-        esp.name.side = Value
-    end
-})
-espTab:AddSlider('Name Size', {
-    Text = 'Name Size',
-    Min = 10,
-    Max = 69,
-    Rounding = 1,
-    Default = esp.size,
-    Tooltip = 'hiyanc is the devil',
-    Callback = function(Value)
-        esp.size = Value
-    end
-})
-espTab:AddToggle('HealthBar', {
-    Default = esp.healthbar.enabled,
-    Text = 'Health bar',
-    Callback = function(Value)
-        esp.healthbar.enabled = Value
-    end
-})
-espTab:AddDropdown('HealthLocation', {
-    Values = {'Left', 'Right'},
-    Default = esp.healthbar.side,
-    Multi = false,
-    Text = 'Healthbar Location',
-    Callback = function(Value)
-        esp.healthbar.side = Value
-    end
-})
-
-if isSolara() == false then
-    chamsTab:AddToggle('Chams', {
-        Text = 'Chams',
-        Default = esp.chams.enabled,
-        Callback = function(Value)
-            esp.chams.enabled = Value
-        end
-    }):AddColorPicker('chams Color',{
-        Text = 'chams Color',
-        Default = esp.chams.color,
-        Tooltip = 'im crying',
-        Callback = function(Value)
-            esp.chams.color = Value
-        end
-    })
-    chamsTab:AddToggle('Visible only chams', {
-        Text = 'Visible only',
-        Default = esp.chams.visible,
-        Callback = function(Value)
-            esp.chams.visible = Value
-        end
-    })
-    chamsTab:AddToggle('Hide hitbox', {
-        Text = 'Show expanded hitbox',
-        Default = esp.chams.hidehbe,
-        Tooltip = 'If hitbox expander transparency is one they will not show up :)',
-        Callback = function(Value)
-            esp.chams.hidehbe = Value
-        end
-    })
-    chamsTab:AddSlider('Chams transparency', {
-        Text = 'Chams transparency',
-        Min = 0,
-        Max = 1,
-        Rounding = 1,
-        Default = esp.chams.transparency,
-        Callback = function(Value)
-            esp.chams.transparency = Value
-        end
-    })
-end
-
-viewTab:AddToggle('Hide arms', {
-    Text = 'Hide arms',
-    Default = esp.misc.arms,
-    Callback = function(Value)
-        esp.misc.arms = Value
-    end
-})
-
-aimTab:AddToggle('Aimbot', {
-    Text = 'Aimbot',
-    Default = aim.enabled,
-
-    Callback = function(Value)
-        aim.enabled = Value
-    end
-}):AddKeyPicker('AimKeyPicker', {
-    Default = aim.key,
-    Mode = 'Hold',
-    Text = 'Aimkey',
-
-    Callback = function(Value)
-    end,
-    Callback = function(Value)
-        aim.key = Value
-    end
-})
-
-aimTab:AddToggle('Teamcheck', {
-    Default = aim.teamaim,
-    Text = 'Teamcheck',
-    Callback = function(Value)
-        aim.teamaim = Value
-    end
-})
-aimTab:AddDropdown('Aim part', {
-    Values = { 'Head', 'UpperTorso', 'LowerTorso', 'RightUpperArm', 'LeftUpperArm', 'RightLowerArm', 'LeftLowerArm', 'RightHand', 'LeftHand', 'RightUpperLeg', 'LeftUpperLeg', 'RightLowerLeg', 'LeftLowerLeg', 'RightFoot', 'LeftFoot' },
-    Default = 1,
-    Multi = false,
-    Text = 'Part',
-    Tooltip = 'i hate you i hate everything leave me alone',
-    Callback = function(Value)
-        aim.part = Value
-    end
-})
-
-aimTab:AddToggle('fovCircle', {
-    Default = aim.showFov,
-    Text = 'Fov circle',
-    Callback = function(Value)
-        aim.showFov = Value
-    end
-}):AddColorPicker('fov circle',{
-    Text = 'fov Color',
-    Default = aim.fovColor,
-    Tooltip = 'im crying',
-    Callback = function(Value)
-        aim.fovColor = Value
-    end
-})
-aimTab:AddSlider('Fov slider', {
-    Text = 'Fov',
-    Default = aim.fov,
-    Min = 5,
-    Max = 300,
-    Rounding = 1,
-    Compact = true,
-
-    Callback = function(Value)
-        aim.fov = Value
-    end
-})
-aimTab:AddSlider('Fov circle thickness', {
-    Text = 'Fov circle thickness',
-    Default = aim.fovThickness,
-    Min = 1,
-    Max = 5,
-    Rounding = 1,
-    Compact = true,
-
-    Callback = function(Value)
-        aim.fovThickness = Value
-    end
-})
-
-aimExtra:AddButton({
-    Text = 'Firerate boost',
-    Tooltip = 'Makes firerate insane. Requires rejoin to stop',
-    Func = function()
-        for _, q in RepStorage.Weapons:GetChildren() do
-            if q:FindFirstChild("FireRate") then
-                q.FireRate.Value = 0.025
-            end
-        end
-    end
-})
-aimExtra:AddButton({
-    Text = 'Force Automatic',
-    Tooltip = 'Requires rejoin to stop',
-    Func = function()
-        for _, q in RepStorage.Weapons:GetChildren() do
-            if q:FindFirstChild("Auto") then
-                q.Auto.Value = true
-            end
-        end
-    end
-})
-
-teleTab:AddToggle('TeleportToggle',{
-    Text = 'Teleport',
-    Tooltip = 'Teleport to any player that is inside of fov circle',
-    Default = misc.tp.enabled,
-    Callback = function(Value)
-        misc.tp.enabled = Value
-    end
-}):AddKeyPicker('tpKeyPicker', {
-    Default = misc.tp.key,
-    Mode = 'Hold',
-    Text = 'Teleport key',
-
-    Callback = function(Value)
-    end,
-    Callback = function(Value)
-        misc.tp.key = Value
-    end
-})
-
-teleTab:AddToggle('tpTeamcheck', {
-    Text = 'Teamcheck',
-    Default = misc.tp.teamcheck,
-    Callback = function(Value)
-        misc.tp.teamcheck = Value
-    end
-})
-
-teleTab:AddToggle('tpaimto', {
-    Text = 'Aim to',
-    Tooltip = 'Aim to target after tp',
-    Default = misc.tp.aimto,
-    Callback = function(Value)
-        misc.tp.aimto = Value
-    end
-})
-
-teleTab:AddDivider()
-teleTab:AddToggle('Target tp', {
-    Text = 'Auto tp',
-    Default = misc.tp.targetTp,
-    Tooltip = 'Auto tps to target',
-    Callback = function(Value)
-        misc.tp.targetTp = Value
-    end
-}):AddKeyPicker('targetTpKey', {
-    Default = misc.tp.targetTpKey,
-    Mode = 'Toggle',
-    Text = 'Target tp key',
-    SyncToggleState = true,
-
-    Callback = function(Value)
-    end,
-    Callback = function(Value)
-        misc.tp.targetTpKey = Value
-    end
-})
-teleTab:AddDropdown('tpTarget', {
-    SpecialType = 'Player',
-    Text = 'Target',
-    Callback = function(Value)
-        misc.tp.target = Value
-    end
-})
-
-hitboxE:AddToggle('Hitbox expander', {
-    Text = 'Expand hitboxes',
-    Default = misc.hbe.enabled,
-    Tooltip = 'Almost silent aim!',
-
-    Callback = function(Value)
-        misc.hbe.enabled = Value
-    end
-})
-hitboxE:AddToggle('Hitbox Teamcheck', {
-    Default = misc.hbe.teamcheck,
-    Text = 'Hitbox expander teamcheck',
-    Callback = function(Value)
-        misc.hbe.teamcheck = Value
-    end
-})
-hitboxE:AddSlider('Hitbox transparency', {
-    Text = 'Hitbox transparency',
+ChamsTab:AddSlider('ChamsTransparency', {
+    Text = 'Chams transparency',
+    Default = Settings.Chams.Transparency,
     Min = 0,
     Max = 1,
     Rounding = 1,
-    Default = misc.hbe.transparency,
     Callback = function(Value)
-        misc.hbe.transparency = Value
+        Settings.Chams.Transparency = Value
     end
 })
-hitboxE:AddSlider('Hitbox size', {
-    Text = 'Hitbox size',
-    Min = 1,
-    Max = 40,
+
+ChamsTab:AddLabel('Outline color'):AddColorPicker('OutlineColorPicker', {
+    Title = 'Outline color',
+    Default = Settings.Chams.Outline.Color,
+
+    Callback = function(Value)
+        Settings.Chams.Outline.Color = Value
+    end
+})
+ChamsTab:AddSlider('OutlineTransparency', {
+    Text = 'Outline transparency',
+    Default = Settings.Chams.Outline.Transparency,
+    Min = 0,
+    Max = 1,
     Rounding = 1,
-    Default = misc.hbe.size,
     Callback = function(Value)
-        misc.hbe.size = Value
+        Settings.Chams.Outline.Transparency = Value
     end
 })
+ChamsTab:AddToggle('ShowTeammates', {
+    Text = "Teammates",
+    Default = Settings.Chams.Teammates,
+    Callback = function(Value)
+        Settings.Chams.Teammates = Value
+    end
+})
+
+Options.ChamsColorPicker:OnChanged(function()
+    UpdateChams()
+end)
+Options.ChamsTransparency:OnChanged(function()
+    UpdateChams()
+end)
+Options.OutlineColorPicker:OnChanged(function()
+    UpdateChams()
+end)
+Options.OutlineTransparency:OnChanged(function()
+    UpdateChams()
+end)
+Toggles.ChamsToggle:OnChanged(function()
+    UpdateChams()
+end)
+Toggles.ShowTeammates:OnChanged(function()
+    UpdateChams()
+end)
 
 Library.ToggleKeybind = Options.MenuKeybind
 
@@ -509,366 +179,27 @@ local WatermarkConnection = game:GetService('RunService').RenderStepped:Connect(
     ));
 end);
 
+local Delay = 1.5
+local Timer = 0
+local Loop = game:GetService("RunService").Heartbeat:Connect(function(Time)
+    Timer = Timer + Time
+    if Timer >= Delay then
+        Timer = Timer - Delay
+        UpdateChams()
+    end
+end)
+
 Library.KeybindFrame.Visible = false;
-
-function createVisuals(player)
-    local draw = {}
-    draw.name = Drawing.new("Text")
-    draw.name.Center = true
-    draw.name.Size = 16
-    draw.name.Outline = true
-    draw.name.OutlineColor = Color3.fromHex('000000')
-
-    draw.boxOutline = Drawing.new("Square")
-    draw.boxOutline.Visible = false
-    draw.boxOutline.Thickness = 2.5
-    draw.boxOutline.Filled = false
-
-    draw.box = Drawing.new("Square")
-    draw.box.Visible = false
-    draw.box.Thickness = 1
-    draw.box.Filled = false
-
-    draw.barOutline = Drawing.new("Line")
-    draw.barOutline.Visible = false
-    draw.barOutline.Thickness = 4
-    draw.barOutline.Color = Color3.fromHex('000000')
-
-    draw.bar = Drawing.new("Line")
-    draw.bar.Visible = false
-    draw.bar.Thickness = 2
-    
-    espList[player] = draw
-end
-
-local fovCircle = Drawing.new('Circle')
-fovCircle.Position = camera.ViewportSize / 2
-fovCircle.Thickness = aim.fovThickness
-fovCircle.Filled = false
-
-local function removeEsp(player)
-    if rawget(espList, player) then
-        for _, drawing in next, espList[player] do
-            drawing:Remove()
-        end
-        espList[player] = nil
-    end
-end
-
-for _, player in next, players:GetPlayers() do
-   if player ~= localplayer then
-       createVisuals(player)
-   end
-end
-
-local addLoop = players.PlayerAdded:Connect(function(player)
-    wait(1)
-    createVisuals(player)
-end)
-
-local delLoop = players.PlayerRemoving:Connect(function(player)
-    removeEsp(player)
-end)
-
-function deleteChams()
-    for _, p in players:GetPlayers() do
-        for _, x in p.Character:GetChildren() do
-            if x:IsA("BasePart") then
-                if x:FindFirstChild("Chams") then
-                    x.Chams:Destroy()
-                end
-            end
-        end
-    end
-end
-
--- need to add a alive check and distance priority
--- could probably just name this aimbot bc its all the aimbot code
-function getBestTarget()
-    local inFov = {}
-    for _, p in players:GetPlayers() do
-        if p.Character.Humanoid.health > 0 then
-            if localPlayer.name ~= p.Name then
-                if localPlayer.team ~= p.Team or not aim.teamaim then
-                    local pos, onScreen, depth = wtvp(p.Character:FindFirstChild(aim.part).Position)
-                    if (onScreen and ((Vector2.new(pos.X, pos.Y) - camera.ViewportSize/2).Magnitude) <= aim.fov) then
-                        workspace.CurrentCamera.CFrame = CFrame.new(workspace.CurrentCamera.CFrame.Position, p.Character:FindFirstChild(aim.part).Position)
-                    end
-                end
-            end
-        end
-    end
-end
-
-function tpToPlayer()
-    for _, p in players:GetPlayers() do
-        if p.Character.Humanoid.health > 0 then
-            if localPlayer.name ~= p.Name then
-                if localPlayer.team ~= p.Team or not misc.tp.teamcheck then
-                    local pos, onScreen, depth = wtvp(p.Character:FindFirstChild(aim.part).Position)
-                    if (onScreen and ((Vector2.new(pos.X, pos.Y) - camera.ViewportSize/2).Magnitude) <= aim.fov) then
-                        localPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(p.Character.HumanoidRootPart.Position)
-                        if misc.tp.aimto then
-                            wait(0.1)
-                            workspace.CurrentCamera.CFrame = CFrame.new(workspace.CurrentCamera.CFrame.Position, p.Character:FindFirstChild(aim.part).Position)
-                        end
-                    end
-                end
-            end
-        end
-    end
-end
-
-function tpToTarget()
-    for _, p in players:GetPlayers() do
-        if p.Character.Humanoid.health > 0 then
-            if localPlayer.name ~= p.Name then
-                if p.Name == misc.tp.target then
-                    local pos, onScreen, depth = wtvp(p.Character:FindFirstChild(aim.part).Position)
-                    localPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(p.Character.HumanoidRootPart.Position)
-                    if misc.tp.aimto then
-                        wait(0.1)
-                        workspace.CurrentCamera.CFrame = CFrame.new(workspace.CurrentCamera.CFrame.Position, p.Character:FindFirstChild(aim.part).Position)
-                    end
-                end
-            end
-        end
-    end
-end
-
-local ESPLoop = game:GetService("RunService").RenderStepped:Connect(function()
-    fovCircle.Visible = aim.showFov
-    fovCircle.Color = aim.fovColor
-    fovCircle.Radius = aim.fov
-    fovCircle.Thickness = aim.fovThickness
-
-    if esp.misc.arms then
-        if camera:FindFirstChild('Arms') then
-            if camera.Arms:FindFirstChild('CSSArms') then
-                camera.Arms:FindFirstChild('CSSArms'):Destroy()
-            end
-        end
-    end
-
-    if aim.enabled then
-        aim.keyHeld = Options.AimKeyPicker:GetState()
-        if aim.keyHeld then
-            getBestTarget()
-        end
-    end
-
-    if misc.tp.enabled then
-        misc.tp.keyHeld = Options.tpKeyPicker.GetState()
-        if misc.tp.keyHeld then
-            tpToPlayer()
-        end
-    end
-
-    if misc.tp.targetTp and misc.tp.target ~= nil then
-        tpToTarget()
-    end
-
-    for l, g in next, espList do
-
-        if misc.hbe.enabled then
-            if l.Team ~= localPlayer.team or not misc.hbe.teamcheck then
-                l.Character.HeadHB.CanCollide = false
-                l.Character.HeadHB.Transparency = misc.hbe.transparency
-                l.Character.HeadHB.Size = Vector3.new(misc.hbe.size, misc.hbe.size, misc.hbe.size)
-                l.Character.HumanoidRootPart.CanCollide = false
-                l.Character.HumanoidRootPart.Transparency = misc.hbe.transparency
-                l.Character.HumanoidRootPart.Size = Vector3.new(misc.hbe.size, misc.hbe.size, misc.hbe.size)
-            else
-                l.Character.HeadHB.Transparency = 1
-                l.Character.HumanoidRootPart.Transparency = 1
-                for i, p in pairs(l.Character:GetChildren()) do -- Should probably make this a function at some point
-                    if p.ClassName == 'Part' or p.ClassName == 'MeshPart' then
-                        if OriginalSizes[p.Name] ~= nil then
-                            if p.Size ~= OriginalSizes[p.Name] then
-                                p.Size = Vector3.new(OriginalSizes[p.Name].X, OriginalSizes[p.Name].Y, OriginalSizes[p.Name].Z)
-                            end
-                        end
-                    end
-                end
-            end
-        else
-            l.Character.HeadHB.Transparency = 1
-            l.Character.HumanoidRootPart.Transparency = 1
-            for i, p in pairs(l.Character:GetChildren()) do
-                if p.ClassName == 'Part' or p.ClassName == 'MeshPart' then
-                    if OriginalSizes[p.Name] ~= nil then
-                        if p.Size ~= OriginalSizes[p.Name] then
-                            p.Size = Vector3.new(OriginalSizes[p.Name].X, OriginalSizes[p.Name].Y, OriginalSizes[p.Name].Z)
-                        end
-                    end
-                end
-            end
-        end
-
-        text = g.name
-        box = g.box
-        boxOutline = g.boxOutline
-        healthbar = g.bar
-        healthbarOutline = g.barOutline
-        if l.Character then
-            if l.Character.Humanoid.health > 0 then
-                if localPlayer.team ~= l.Team or not esp.teamcheck then
-                    local playerPos = l.Character:GetModelCFrame()
-                    local pos, onScreen, depth = wtvp(l.Character.HumanoidRootPart.Position)
-                    if pos and onScreen then
-                        local scaleFactor = 1 / (depth * tan(rad(camera.FieldOfView / 2)) * 2) * 1000
-                        local width, height = round(4 * scaleFactor, 6 * scaleFactor)
-                        local x, y = round(pos.X, pos.Y)
-                        local topOffset = y - height / 2 - 15
-                        local bottomOffset = y + height / 2
-                        if esp.box.enabled then
-                            box.Size = Vector2.new(width, height)
-                            box.Position = Vector2.new(round(x - width / 2, y - height / 2))
-                            box.Color = esp.colortext
-                            box.Visible = true
-                            boxOutline.Size = Vector2.new(width, height)
-                            boxOutline.Position = Vector2.new(round(x - width / 2, y - height / 2))
-                            boxOutline.Color = Color3.fromHex('000000')
-                            boxOutline.Visible = true
-                        else
-                            box.Visible = false
-                            boxOutline.Visible = false
-                        end
-
-                        if esp.healthbar.enabled then
-                            health = game:GetService("Players")[l.Character.name].NRPBS["Health"].Value / l.Character.Humanoid.MaxHealth
-                            if esp.healthbar.side == "Left" then
-                                healthbar.From = Vector2.new(round(x - width / 2 - 3, y - height / 2 + height))
-                                healthbar.To = Vector2.new(healthbar.From.X, healthbar.From.Y - (health) * height)
-                                healthbarOutline.From = Vector2.new(round(x - width / 2 - 3, y - height / 2 + height + 1))
-                                healthbarOutline.To = Vector2.new(healthbar.From.X, healthbar.From.Y - (health) * height - 1)
-                                
-                            else
-                                healthbar.From = Vector2.new(round(x + width / 2 + 3, y - height / 2 + height))
-                                healthbar.To = Vector2.new(healthbar.From.X, healthbar.From.Y - (health) * height)
-                                healthbarOutline.From = Vector2.new(round(x + width / 2 + 3, y - height / 2 + height + 1))
-                                healthbarOutline.To = Vector2.new(healthbar.From.X, healthbar.From.Y - (health) * height - 1)
-                            end
-                            healthbar.Color = Color3.fromRGB(255 - (255 * health), 255 * health, 0)
-                            healthbar.Visible = true
-                            healthbarOutline.Visible = true
-                        else
-                            healthbar.Visible = false
-                            healthbarOutline.Visible = false
-                        end
-                        if esp.name.enabled then
-                            text.Size = esp.size
-                            text.Color = esp.color
-                            text.Visible = true
-
-                            text.Text = l.name
-                            if esp.name.side == "Top" then
-                                text.Position = Vector2.new(round(x, topOffset))
-                                topOffset+=11
-                            else
-                                text.Position = Vector2.new(round(x, bottomOffset))
-                                bottomOffset+=11
-                            end
-                        else
-                            text.Visible = false
-                        end
-                    else
-                        text.Visible = false
-                        box.Visible = false
-                        boxOutline.Visible = false
-                        healthbar.Visible = false
-                        healthbarOutline.Visible = false
-                    end
-                else
-                    text.Visible = false
-                    box.Visible = false
-                    boxOutline.Visible = false
-                    healthbar.Visible = false
-                    healthbarOutline.Visible = false
-                end
-            end
-        else
-            text.Visible = false
-            box.Visible = false
-            boxOutline.Visible = false
-            healthbar.Visible = false
-            healthbarOutline.Visible = false
-        end
-    end
-end)
-
--- Pretty sure everything about this is not that great for performance ฅ^•ﻌ•^ฅ
-local mainloop
-if isSolara() == false then
-    mainloop = game:GetService("RunService").Heartbeat:Connect(function()
-        deleteChams()
-        if esp.chams.enabled then
-            for g, v in next, players:GetPlayers() do
-                if localPlayer.team ~= v.Team or not esp.teamcheck then
-                    if v.Character and v.Character:FindFirstChild("HumanoidRootPart") and  v.Character:FindFirstChild("Humanoid") and v.Character:FindFirstChild("Humanoid").Health ~= 0 and v.Character.name ~= localPlayer.Character.name then
-                        for k, b in next, v.Character:GetChildren() do
-                            if b:IsA("BasePart") and b.Transparency ~= 1 then
-                                if not b:FindFirstChild("Glow") and not b:FindFirstChild("Chams") then
-                                    if b.Name ~= 'HeadHB' and b.Name ~= 'HumanoidRootPart' or esp.chams.hidehbe then
-                                        local y = Instance.new("BoxHandleAdornment", b)
-                                        y.Size = b.Size + Vector3.new(0.25, 0.25, 0.25)
-                                        y.Name = "Chams"
-                                        y.AlwaysOnTop = not esp.chams.visible
-                                        y.ZIndex = 3
-                                        y.Adornee = b 
-                                        y.Color3 = esp.chams.color
-                                        y.Transparency = esp.chams.transparency
-                                    end
-                                end
-                            end
-                        end
-                    end
-                end
-            end
-        end
-    end)
-else
-    Library:Notify("Performance is limited on solara requiring chams to not be available", 10)
-end
-
--- UI BELOW
-
 
 Library:OnUnload(function()
     WatermarkConnection:Disconnect()
 
-    ESPLoop:Disconnect()
-    ESPLoop = nil
+    Loop:Disconnect()
+    Loop = nil
 
-    mainloop:Disconnect()
-    mainloop = nil
-
-    addLoop:Disconnect()
-    addLoop = nil
-    delLoop:Disconnect()
-    delLoop = nil
-
-    -- Reset hitboxes
-    for y, l in pairs(players:GetPlayers()) do
-        for i, p in pairs(l.Character:GetChildren()) do
-            if p.ClassName == 'Part' or p.ClassName == 'MeshPart' then
-                if OriginalSizes[p.Name] ~= nil then
-                    if p.Size ~= OriginalSizes[p.Name] then
-                        p.Size = Vector3.new(OriginalSizes[p.Name].X, OriginalSizes[p.Name].Y, OriginalSizes[p.Name].Z)
-                    end
-                end
-            end
-        end
+    for _, q in pairs(Chams) do
+        q.Enabled = false
     end
-
-    -- Delete ESP
-    for _, p in players:GetPlayers() do
-        removeEsp(p)
-    end
-
-    deleteChams()
-
-    fovCircle:Remove()
 
     print('Unloaded!')
     Library.Unloaded = true
